@@ -32,19 +32,6 @@ export default function Landing() {
             >
               Play<span className="text-[var(--secondary)]">•</span>
             </Link>
-            <nav className="flex flex-wrap gap-2 text-sm">
-              <Button asChild variant="ghost">
-                <Link to="#quizzes">Pick a quiz</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="#quizzes">See leaderboard</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <a href="https://www.shadcn/ui" target="_blank" rel="noreferrer">
-                  Theme inspiration
-                </a>
-              </Button>
-            </nav>
           </div>
         </header>
 
