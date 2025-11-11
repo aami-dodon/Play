@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-size="52"
+    font-family="Space Grotesk, Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    fill="var(--primary, #facc15)"
+  >
+    ✨
+  </text>
+</svg>

@@ -6,6 +6,7 @@ const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const { testConnection } = require("./db");
 const quizRoutes = require("./routes/quizRoutes");
+const leaderboardRoutes = require("./routes/leaderboardRoutes");
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3000;
@@ -75,6 +76,7 @@ apiRouter.get("/health", (req, res) => res.send("OK"));
 
 // Mount quiz routes under /api/quizzes
 apiRouter.use("/quizzes", quizRoutes);
+apiRouter.use("/leaderboard", leaderboardRoutes);
 
 app.use(API_PREFIX, apiRouter);
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { notifyThemeChange } from "@/lib/theme";
 
 const STORAGE_KEY = "play-theme";
 
@@ -30,6 +31,7 @@ export default function ThemeToggle({ className }) {
     root.classList.toggle("dark", theme === "dark");
     root.style.setProperty("color-scheme", theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
+    notifyThemeChange(theme);
   }, [theme]);
 
   const label = useMemo(() => {

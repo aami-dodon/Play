@@ -68,12 +68,33 @@ const { pool } = require("../db");
  *               properties:
  *                 error:
  *                   type: string
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Optional category name to filter quizzes.
  */
 
 // 🧠 GET all quizzes
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM quizzes ORDER BY id ASC");
+    const { category } = req.query;
+    const filters = [];
+    const values = [];
+
+    if (category) {
+      values.push(category);
+      filters.push(`LOWER(category) = LOWER($${values.length})`);
+    }
+
+    let query = "SELECT * FROM quizzes";
+    if (filters.length) {
+      query += ` WHERE ${filters.join(" AND ")}`;
+    }
+    query += " ORDER BY created_at DESC, id DESC";
+
+    const result = await pool.query(query, values);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -112,16 +133,23 @@ router.get("/", async (req, res) => {
 router.get("/:slug/questions", async (req, res) => {
   const { slug } = req.params;
   try {
-    const quiz = await pool.query("SELECT id FROM quizzes WHERE slug=$1", [slug]);
+    const quiz = await pool.query("SELECT id, title, category FROM quizzes WHERE slug=$1", [slug]);
     if (quiz.rows.length === 0)
       return res.status(404).json({ error: "Quiz not found" });
 
     const quizId = quiz.rows[0].id;
+    const quizCategory = quiz.rows[0].category || null;
+    const quizTitle = quiz.rows[0].title || null;
     const result = await pool.query(
       "SELECT id, question_text, options, correct_option, explanation FROM questions WHERE quiz_id=$1 ORDER BY id ASC",
       [quizId]
     );
-    res.json(result.rows);
+    const payload = result.rows.map((row) => ({
+      ...row,
+      category: row.category || quizCategory,
+      quiz_title: row.quiz_title || quizTitle,
+    }));
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

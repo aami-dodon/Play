@@ -1,17 +1,28 @@
+import { useEffect, useState } from "react";
 import {
   CircleCheckIcon,
   InfoIcon,
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
+} from "lucide-react";
 import { Toaster as Sonner } from "sonner";
 
-const Toaster = ({
-  ...props
-}) => {
-  const { theme = "system" } = useTheme()
+import { getDocumentTheme, THEME_EVENT } from "@/lib/theme";
+
+const Toaster = ({ ...props }) => {
+  const [theme, setTheme] = useState(() => getDocumentTheme());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handler = (event) => {
+      setTheme(event.detail || getDocumentTheme());
+    };
+
+    window.addEventListener(THEME_EVENT, handler);
+    return () => window.removeEventListener(THEME_EVENT, handler);
+  }, []);
 
   return (
     <Sonner
@@ -24,8 +35,9 @@ const Toaster = ({
         error: <OctagonXIcon className="size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
-      {...props} />
+      {...props}
+    />
   );
-}
+};
 
-export { Toaster }
+export { Toaster };

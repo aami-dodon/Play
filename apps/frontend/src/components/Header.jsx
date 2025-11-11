@@ -1,20 +1,109 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { MenuIcon, Sparkles } from "lucide-react";
 
 import ThemeToggle from "./ThemeToggle.jsx";
+import { Button } from "./ui/button";
+import { Card } from "./ui/card";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { texts } from "@/texts";
 
-const headerClasses =
-  "rounded-3xl border border-border/70 bg-card/90 p-6 shadow-[0_25px_90px_rgba(2,6,23,0.45)] backdrop-blur-xl";
+const navItems = texts.nav;
 
-export default function Header({ children, className = "" }) {
+const isActivePath = (pathname, href) => {
+  if (href === "/") return pathname === "/";
+  return pathname.startsWith(href);
+};
+
+function DesktopNav({ pathname }) {
   return (
-    <header className={`${headerClasses} ${className}`}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <Link to="/" className="text-lg font-semibold uppercase tracking-[0.45em]">
-          Play<span className="text-[var(--secondary)]">•</span>
-        </Link>
-        <ThemeToggle />
+    <nav className="hidden md:flex flex-1 flex-wrap items-center gap-3">
+      {navItems.map((item) => (
+        <Button
+          key={item.href}
+          asChild
+          variant="ghost"
+          size="sm"
+          className={`rounded-full px-3 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground ${
+            isActivePath(pathname, item.href) ? "text-primary" : ""
+          }`}
+        >
+          <Link to={item.href}>{item.label}</Link>
+        </Button>
+      ))}
+    </nav>
+  );
+}
+
+function MobileNav({ pathname }) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="md:hidden">
+          <MenuIcon className="size-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="gap-6">
+        <div className="flex items-center gap-2 px-2 pt-4">
+          <Sparkles className="size-5 text-primary" />
+          <span className="text-lg font-semibold">{texts.brand.name}</span>
+        </div>
+        <div className="flex flex-col gap-3 px-2">
+          {navItems.map((item) => (
+            <Button
+              key={item.href}
+              asChild
+              variant="ghost"
+              className={`justify-start text-base font-semibold ${
+                isActivePath(pathname, item.href) ? "text-primary" : ""
+              }`}
+            >
+              <Link to={item.href}>{item.label}</Link>
+            </Button>
+          ))}
+        </div>
+        <div className="px-2">
+          <Button asChild className="w-full">
+            <Link to="/challenge">{texts.brand.punchline}</Link>
+          </Button>
+        </div>
+        <div className="px-2 pb-6">
+          <ThemeToggle className="w-full justify-center" />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export default function Header() {
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  return (
+    <Card className="sticky top-4 z-40 border-border/70 bg-card/95/90 px-5 py-4 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="rounded-full bg-[radial-gradient(circle_at_center,_color-mix(in_oklab,_var(--primary)_100%,_transparent)_20%,_transparent_70%)] p-2">
+              <Sparkles className="size-4 text-primary" />
+            </span>
+            <div className="flex flex-col leading-none">
+              <span className="text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+                {texts.brand.name}
+              </span>
+              <span className="text-xs text-muted-foreground">{texts.brand.tagline}</span>
+            </div>
+          </Link>
+        </div>
+
+        <div className="flex flex-1 items-center justify-end gap-3">
+          <DesktopNav pathname={pathname} />
+          <ThemeToggle className="hidden md:inline-flex" />
+          <Button asChild size="sm" className="hidden md:inline-flex rounded-full px-6">
+            <Link to="/challenge">{texts.brand.punchline}</Link>
+          </Button>
+          <MobileNav pathname={pathname} />
+        </div>
       </div>
-      {children}
-    </header>
+    </Card>
   );
 }
