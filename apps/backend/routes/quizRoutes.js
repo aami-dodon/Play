@@ -1,6 +1,74 @@
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Quiz:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         slug:
+ *           type: string
+ *         title:
+ *           type: string
+ *     Question:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         question_text:
+ *           type: string
+ *         options:
+ *           type: array
+ *           items:
+ *             type: string
+ *         correct_option:
+ *           type: string
+ *         explanation:
+ *           type: string
+ *     LeaderboardEntry:
+ *       type: object
+ *       properties:
+ *         username:
+ *           type: string
+ *         score:
+ *           type: integer
+ *         completion_time_seconds:
+ *           type: integer
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ */
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../db");
+
+/**
+ * @openapi
+ * /quizzes:
+ *   get:
+ *     summary: List all quizzes
+ *     tags:
+ *       - Quizzes
+ *     responses:
+ *       200:
+ *         description: Array of quizzes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Quiz"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
 
 // 🧠 GET all quizzes
 router.get("/", async (req, res) => {
@@ -12,6 +80,34 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /quizzes/{slug}/questions:
+ *   get:
+ *     summary: Get questions for a quiz
+ *     tags:
+ *       - Quizzes
+ *     parameters:
+ *       - name: slug
+ *         in: path
+ *         description: Unique slug of the quiz
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Array of quiz questions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/Question"
+ *       404:
+ *         description: Quiz not found
+ *       500:
+ *         description: Internal server error
+ */
 // 🧩 GET questions for a given quiz slug
 router.get("/:slug/questions", async (req, res) => {
   const { slug } = req.params;
@@ -31,6 +127,33 @@ router.get("/:slug/questions", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /quizzes/{slug}/leaderboard:
+ *   get:
+ *     summary: Get leaderboard entries for a quiz
+ *     tags:
+ *       - Leaderboard
+ *     parameters:
+ *       - name: slug
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Top leaderboard entries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: "#/components/schemas/LeaderboardEntry"
+ *       404:
+ *         description: Quiz not found
+ *       500:
+ *         description: Internal server error
+ */
 // 🏁 GET leaderboard for a quiz
 router.get("/:slug/leaderboard", async (req, res) => {
   const { slug } = req.params;
@@ -54,6 +177,58 @@ router.get("/:slug/leaderboard", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /quizzes/{slug}/leaderboard:
+ *   post:
+ *     summary: Submit a leaderboard entry for a quiz
+ *     tags:
+ *       - Leaderboard
+ *     parameters:
+ *       - name: slug
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       description: Leaderboard entry payload
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - score
+ *               - completion_time_seconds
+ *             properties:
+ *               username:
+ *                 type: string
+ *               score:
+ *                 type: integer
+ *               completion_time_seconds:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Updated leaderboard
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 leaderboard:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/LeaderboardEntry"
+ *       400:
+ *         description: Missing required fields
+ *       404:
+ *         description: Quiz not found
+ *       500:
+ *         description: Internal server error
+ */
 // 🧾 POST new leaderboard entry
 router.post("/:slug/leaderboard", async (req, res) => {
   const { slug } = req.params;

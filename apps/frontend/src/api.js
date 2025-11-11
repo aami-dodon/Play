@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:6008/api"; // backend URL
+const API_BASE = import.meta.env.VITE_API_URL || "/api"; // backend URL, fallback to relative path for production
 
 export async function fetchQuizzes() {
   const res = await axios.get(`${API_BASE}/quizzes`);

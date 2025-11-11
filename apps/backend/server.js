@@ -1,11 +1,16 @@
 require("dotenv").config();
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const swaggerJsDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 const { testConnection } = require("./db");
 const quizRoutes = require("./routes/quizRoutes");
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3000;
+const API_PREFIX = "/api";
+
 const defaultAllowedHosts = ["localhost", "127.0.0.1"];
 const envAllowedHosts = (process.env.CLIENT_ALLOWED_HOSTS || "")
   .split(",")
@@ -27,14 +32,54 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Health route
-app.get("/health", (req, res) => res.send("OK"));
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.1",
+    info: {
+      title: "Play Dodon API",
+      version: "1.0.0",
+      description: "Backend for the Play Dodon quiz experience",
+    },
+    servers: [{ url: API_PREFIX }],
+  },
+  apis: [path.join(__dirname, "server.js"), path.join(__dirname, "routes/*.js")],
+};
+
+const swaggerSpec = swaggerJsDoc(swaggerOptions);
+
+app.use(
+  `${API_PREFIX}/docs`,
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, { explorer: true })
+);
+
+const apiRouter = express.Router();
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: OK
+ */
+apiRouter.get("/health", (req, res) => res.send("OK"));
 
 // Mount quiz routes under /api/quizzes
-app.use("/api/quizzes", quizRoutes);
+apiRouter.use("/quizzes", quizRoutes);
+
+app.use(API_PREFIX, apiRouter);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server is listening on http://localhost:${PORT}`);
+  console.log(`✅ Server is listening on http://localhost:${PORT}${API_PREFIX}`);
   testConnection();
 });
