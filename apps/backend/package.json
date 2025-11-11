@@ -4,17 +4,20 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "db:init": "node initDb.js"
+    "prepare": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.7.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.1",
-    "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "prisma": "^5.7.0"
   }
 }

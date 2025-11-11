@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quiz {
+  id             Int           @id @default(autoincrement())
+  slug           String        @unique
+  title          String
+  description    String?
+  category       String?
+  difficulty     String        @default("Spicy")
+  featured       Boolean       @default(false)
+  players_label  String?
+  streak_label   String?
+  created_at     DateTime      @default(now())
+  questions      Question[]    @relation("QuizQuestions")
+  leaderboard    Leaderboard[] @relation("QuizLeaderboard")
+
+  @@map("quizzes")
+}
+
+model Question {
+  id               Int      @id @default(autoincrement())
+  quiz_id          Int
+  quiz             Quiz     @relation(fields: [quiz_id], references: [id], name: "QuizQuestions")
+  question_text    String
+  options          Json     @db.JsonB
+  correct_option   String
+  explanation      String?
+  created_at       DateTime @default(now())
+
+  @@unique([quiz_id, question_text], name: "question_quiz_id_question_text_key")
+  @@map("questions")
+}
+
+model Leaderboard {
+  id                      Int      @id @default(autoincrement())
+  quiz_id                 Int
+  quiz                    Quiz     @relation(fields: [quiz_id], references: [id], name: "QuizLeaderboard")
+  username                String?  @db.VarChar(100)
+  completion_time_seconds Int?
+  score                   Int?
+  created_at              DateTime @default(now())
+
+  @@map("leaderboard")
+}

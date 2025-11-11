@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
-const { testConnection } = require("./db");
+const { testConnection } = require("./prismaClient");
 const quizRoutes = require("./routes/quizRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
 

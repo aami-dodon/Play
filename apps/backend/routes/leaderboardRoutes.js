@@ -42,15 +42,15 @@
  */
 const express = require("express");
 const router = express.Router();
-const { pool } = require("../db");
+const { prisma } = require("../prismaClient");
+const { Prisma } = require("@prisma/client");
 
 router.get("/", async (req, res) => {
   const limitParam = parseInt(req.query.limit, 10);
   const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 10;
 
   try {
-    const result = await pool.query(
-      `
+    const leaderboard = await prisma.$queryRaw(Prisma.sql`
       WITH aggregated AS (
         SELECT
           username,
@@ -89,12 +89,10 @@ router.get("/", async (req, res) => {
       FROM aggregated a
       LEFT JOIN category_ranked cr ON cr.username = a.username AND cr.rn = 1
       ORDER BY a.total_score DESC, a.best_time_seconds ASC NULLS LAST
-      LIMIT $1
-      `,
-      [limit]
-    );
+      LIMIT ${limit}
+    `);
 
-    res.json(result.rows);
+    res.json(leaderboard);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

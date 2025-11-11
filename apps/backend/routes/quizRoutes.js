@@ -41,7 +41,14 @@
  */
 const express = require("express");
 const router = express.Router();
-const { pool } = require("../db");
+const { prisma } = require("../prismaClient");
+
+function parseFeaturedFlag(value) {
+  if (value === undefined || value === null) return null;
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  return null;
+}
 
 /**
  * @openapi
@@ -80,33 +87,29 @@ const { pool } = require("../db");
  *           type: boolean
  *         description: Optional flag to filter featured quizzes.
  */
-
-// 🧠 GET all quizzes
 router.get("/", async (req, res) => {
   try {
     const { category, featured } = req.query;
-    const filters = [];
-    const values = [];
+    const where = {};
 
     if (category) {
-      values.push(category);
-      filters.push(`LOWER(category) = LOWER($${values.length})`);
+      where.category = { equals: category, mode: "insensitive" };
     }
 
-    if (featured === "true" || featured === "false" || featured === "1" || featured === "0") {
-      const flag = featured === "true" || featured === "1";
-      values.push(flag);
-      filters.push(`featured = $${values.length}`);
+    const featuredFlag = parseFeaturedFlag(featured);
+    if (featuredFlag !== null) {
+      where.featured = featuredFlag;
     }
 
-    let query = "SELECT * FROM quizzes";
-    if (filters.length) {
-      query += ` WHERE ${filters.join(" AND ")}`;
-    }
-    query += " ORDER BY created_at DESC, id DESC";
+    const quizzes = await prisma.quiz.findMany({
+      where,
+      orderBy: [
+        { created_at: "desc" },
+        { id: "desc" },
+      ],
+    });
 
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    res.json(quizzes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -140,26 +143,34 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-// 🧩 GET questions for a given quiz slug
 router.get("/:slug/questions", async (req, res) => {
   const { slug } = req.params;
   try {
-    const quiz = await pool.query("SELECT id, title, category FROM quizzes WHERE slug=$1", [slug]);
-    if (quiz.rows.length === 0)
-      return res.status(404).json({ error: "Quiz not found" });
+    const quiz = await prisma.quiz.findUnique({
+      where: { slug },
+      select: { id: true, category: true, title: true },
+    });
 
-    const quizId = quiz.rows[0].id;
-    const quizCategory = quiz.rows[0].category || null;
-    const quizTitle = quiz.rows[0].title || null;
-    const result = await pool.query(
-      "SELECT id, question_text, options, correct_option, explanation FROM questions WHERE quiz_id=$1 ORDER BY id ASC",
-      [quizId]
-    );
-    const payload = result.rows.map((row) => ({
+    if (!quiz) return res.status(404).json({ error: "Quiz not found" });
+
+    const questions = await prisma.question.findMany({
+      where: { quiz_id: quiz.id },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        question_text: true,
+        options: true,
+        correct_option: true,
+        explanation: true,
+      },
+    });
+
+    const payload = questions.map((row) => ({
       ...row,
-      category: row.category || quizCategory,
-      quiz_title: row.quiz_title || quizTitle,
+      category: quiz.category || null,
+      quiz_title: quiz.title || null,
     }));
+
     res.json(payload);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -193,24 +204,28 @@ router.get("/:slug/questions", async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-// 🏁 GET leaderboard for a quiz
 router.get("/:slug/leaderboard", async (req, res) => {
   const { slug } = req.params;
   try {
-    const quiz = await pool.query("SELECT id FROM quizzes WHERE slug=$1", [slug]);
-    if (quiz.rows.length === 0)
-      return res.status(404).json({ error: "Quiz not found" });
+    const quiz = await prisma.quiz.findUnique({ where: { slug }, select: { id: true } });
+    if (!quiz) return res.status(404).json({ error: "Quiz not found" });
 
-    const quizId = quiz.rows[0].id;
-    const result = await pool.query(
-      `SELECT username, score, completion_time_seconds, created_at
-       FROM leaderboard
-       WHERE quiz_id=$1
-       ORDER BY score DESC, completion_time_seconds ASC
-       LIMIT 10`,
-      [quizId]
-    );
-    res.json(result.rows);
+    const leaderboard = await prisma.leaderboard.findMany({
+      where: { quiz_id: quiz.id },
+      orderBy: [
+        { score: "desc" },
+        { completion_time_seconds: "asc" },
+      ],
+      take: 10,
+      select: {
+        username: true,
+        score: true,
+        completion_time_seconds: true,
+        created_at: true,
+      },
+    });
+
+    res.json(leaderboard);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -268,35 +283,42 @@ router.get("/:slug/leaderboard", async (req, res) => {
  *       500:
  *         description: Internal server error
  */
-// 🧾 POST new leaderboard entry
 router.post("/:slug/leaderboard", async (req, res) => {
   const { slug } = req.params;
   const { username, score, completion_time_seconds } = req.body;
-  if (!username || score == null || completion_time_seconds == null)
+  if (!username || score == null || completion_time_seconds == null) {
     return res.status(400).json({ error: "Missing required fields" });
+  }
 
   try {
-    const quiz = await pool.query("SELECT id FROM quizzes WHERE slug=$1", [slug]);
-    if (quiz.rows.length === 0)
-      return res.status(404).json({ error: "Quiz not found" });
+    const quiz = await prisma.quiz.findUnique({ where: { slug }, select: { id: true } });
+    if (!quiz) return res.status(404).json({ error: "Quiz not found" });
 
-    const quizId = quiz.rows[0].id;
-    await pool.query(
-      `INSERT INTO leaderboard (quiz_id, username, score, completion_time_seconds)
-       VALUES ($1,$2,$3,$4)`,
-      [quizId, username, score, completion_time_seconds]
-    );
+    await prisma.leaderboard.create({
+      data: {
+        quiz_id: quiz.id,
+        username,
+        score,
+        completion_time_seconds,
+      },
+    });
 
-    // Return updated top 10 leaderboard
-    const result = await pool.query(
-      `SELECT username, score, completion_time_seconds, created_at
-       FROM leaderboard
-       WHERE quiz_id=$1
-       ORDER BY score DESC, completion_time_seconds ASC
-       LIMIT 10`,
-      [quizId]
-    );
-    res.json({ success: true, leaderboard: result.rows });
+    const leaderboard = await prisma.leaderboard.findMany({
+      where: { quiz_id: quiz.id },
+      orderBy: [
+        { score: "desc" },
+        { completion_time_seconds: "asc" },
+      ],
+      take: 10,
+      select: {
+        username: true,
+        score: true,
+        completion_time_seconds: true,
+        created_at: true,
+      },
+    });
+
+    res.json({ success: true, leaderboard });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
