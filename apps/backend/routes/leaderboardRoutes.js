@@ -70,35 +70,99 @@ router.get("/", async (req, res) => {
   const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
   const fetchLimit = limit + 1;
 
+  const filterConditions = [];
+  if (req.query.category && req.query.category.trim()) {
+    const categoryParam = req.query.category.trim();
+    filterConditions.push(Prisma.sql`LOWER(q.category) = LOWER(${categoryParam})`);
+  }
+
+  if (req.query.challenge && req.query.challenge.trim()) {
+    const challengeParam = req.query.challenge.trim();
+    filterConditions.push(Prisma.sql`q.slug = ${challengeParam}`);
+  }
+
+  const filterWhere =
+    filterConditions.length > 0 ? Prisma.sql`AND ${Prisma.join(filterConditions, " AND ")}` : Prisma.empty;
+
   try {
     const leaderboard = await prisma.$queryRaw(Prisma.sql`
-      WITH aggregated AS (
+      WITH filtered_leaderboard AS (
+        SELECT
+          l.*,
+          q.category,
+          q.slug,
+          q.title
+        FROM leaderboard l
+        JOIN quizzes q ON q.id = l.quiz_id
+        WHERE l.username IS NOT NULL AND l.username <> ''
+        ${filterWhere}
+      ),
+      aggregated AS (
         SELECT
           username,
-          SUM(score) AS total_score,
+          SUM(COALESCE(score, 0)) AS total_score,
           COUNT(*) AS attempts,
           MIN(completion_time_seconds) AS best_time_seconds,
           MAX(created_at) AS last_played
-        FROM leaderboard
-        WHERE username IS NOT NULL AND username <> ''
+        FROM filtered_leaderboard
         GROUP BY username
       ),
       category_base AS (
         SELECT
-          l.username,
-          q.category,
+          username,
+          category,
           COUNT(*) AS plays,
-          MAX(l.created_at) AS last_played_category
-        FROM leaderboard l
-        JOIN quizzes q ON q.id = l.quiz_id
-        WHERE l.username IS NOT NULL AND l.username <> ''
-        GROUP BY l.username, q.category
+          MAX(created_at) AS last_played_category
+        FROM filtered_leaderboard
+        GROUP BY username, category
       ),
       category_ranked AS (
         SELECT
           *,
           ROW_NUMBER() OVER (PARTITION BY username ORDER BY plays DESC, last_played_category DESC) AS rn
         FROM category_base
+      ),
+      challenge_base AS (
+        SELECT
+          username,
+          title AS challenge_title,
+          slug AS challenge_slug,
+          COUNT(*) AS plays,
+          MAX(created_at) AS last_played_challenge
+        FROM filtered_leaderboard
+        GROUP BY username, title, slug
+      ),
+      challenge_ranked AS (
+        SELECT
+          *,
+          ROW_NUMBER() OVER (PARTITION BY username ORDER BY plays DESC, last_played_challenge DESC) AS rn
+        FROM challenge_base
+      ),
+      category_score_rows AS (
+        SELECT
+          username,
+          COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS category_key,
+          SUM(COALESCE(score, 0)) AS total_score
+        FROM filtered_leaderboard
+        GROUP BY username, category_key
+      ),
+      category_score_map AS (
+        SELECT username, jsonb_object_agg(category_key, total_score) AS category_scores
+        FROM category_score_rows
+        GROUP BY username
+      ),
+      challenge_score_rows AS (
+        SELECT
+          username,
+          COALESCE(NULLIF(TRIM(slug), ''), 'legacy-challenge') AS challenge_slug,
+          SUM(COALESCE(score, 0)) AS total_score
+        FROM filtered_leaderboard
+        GROUP BY username, challenge_slug
+      ),
+      challenge_score_map AS (
+        SELECT username, jsonb_object_agg(challenge_slug, total_score) AS challenge_scores
+        FROM challenge_score_rows
+        GROUP BY username
       )
       SELECT
         a.username,
@@ -106,13 +170,44 @@ router.get("/", async (req, res) => {
         a.attempts,
         a.best_time_seconds,
         a.last_played,
-        cr.category AS top_category
+        cr.category AS top_category,
+        ch.challenge_title AS top_challenge,
+        ch.challenge_slug AS top_challenge_slug,
+        cat.category_scores,
+        chm.challenge_scores
       FROM aggregated a
       LEFT JOIN category_ranked cr ON cr.username = a.username AND cr.rn = 1
-    ORDER BY a.total_score DESC, a.best_time_seconds ASC NULLS LAST
+      LEFT JOIN challenge_ranked ch ON ch.username = a.username AND ch.rn = 1
+      LEFT JOIN category_score_map cat ON cat.username = a.username
+      LEFT JOIN challenge_score_map chm ON chm.username = a.username
+      ORDER BY a.total_score DESC, a.best_time_seconds ASC NULLS LAST
       LIMIT ${fetchLimit}
       OFFSET ${offset}
     `);
+
+    const challengeLookupResult = await prisma.$queryRaw(Prisma.sql`
+      SELECT jsonb_object_agg(tmp.slug, tmp.title) AS challenge_lookup
+      FROM (
+        SELECT DISTINCT q.slug, q.title
+        FROM leaderboard l
+        JOIN quizzes q ON q.id = l.quiz_id
+        WHERE l.username IS NOT NULL AND l.username <> ''
+      ) tmp
+    `);
+    const challengeLookup =
+      Array.isArray(challengeLookupResult) && challengeLookupResult.length > 0
+        ? challengeLookupResult[0]?.challenge_lookup || {}
+        : {};
+
+    const normalizeScoreMap = (value) => {
+      if (!value || typeof value !== "object") return {};
+      return Object.entries(value).reduce((acc, [key, mapValue]) => {
+        const num = Number(mapValue ?? 0);
+        if (!Number.isFinite(num)) return acc;
+        acc[key] = num;
+        return acc;
+      }, {});
+    };
 
     const normalized = leaderboard.map((row) => ({
       ...row,
@@ -120,13 +215,15 @@ router.get("/", async (req, res) => {
       attempts: row.attempts != null ? Number(row.attempts) : row.attempts,
       best_time_seconds:
         row.best_time_seconds != null ? Number(row.best_time_seconds) : row.best_time_seconds,
+      category_scores: normalizeScoreMap(row.category_scores),
+      challenge_scores: normalizeScoreMap(row.challenge_scores),
     }));
 
     const hasMore = leaderboard.length > limit;
     const entries = hasMore ? normalized.slice(0, limit) : normalized;
     const nextOffset = offset + entries.length;
 
-    res.json({ entries, hasMore, nextOffset });
+    res.json({ entries, hasMore, nextOffset, challengeLookup });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -39,9 +39,52 @@ const fallbackQuestions = [
 
 const placeholderPlayers = ["2.1k online", "987 online", "1.4k online", "612 online"];
 const placeholderStreaks = ["13 wins", "8 wins", "22 wins", "5 wins"];
+const SKELETON_CARD_COUNT = 4;
+
+function shuffleArray(items) {
+  if (!Array.isArray(items)) return [];
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function buildQuestionSet(data) {
+  const source = Array.isArray(data) && data.length ? data : fallbackQuestions;
+  return shuffleArray(source);
+}
 
 const PLAYED_CHALLENGES_KEY = "played_challenges";
 const QUIZ_PAGE_SIZE = 8;
+const CHALLENGE_LIST_CACHE_KEY = "challenge_list_cache";
+
+function getChallengeCacheKey(category) {
+  return `${CHALLENGE_LIST_CACHE_KEY}:${category || "all"}`;
+}
+
+function readCachedChallenges(category) {
+  if (typeof window === "undefined") return [];
+  try {
+    const serialized = window.localStorage.getItem(getChallengeCacheKey(category));
+    if (!serialized) return [];
+    const parsed = JSON.parse(serialized);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn("Failed to read cached challenges", error);
+    return [];
+  }
+}
+
+function cacheChallengeList(category, data) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(getChallengeCacheKey(category), JSON.stringify(Array.isArray(data) ? data : []));
+  } catch (error) {
+    console.warn("Failed to cache challenges", error);
+  }
+}
 
 function readPlayedChallenges() {
   if (typeof window === "undefined") return new Set();
@@ -69,6 +112,13 @@ function markChallengePlayed(slug) {
 export default function Challenge() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0 });
+    }
+  }, [slug]);
+  const selectedCategory = searchParams.get("category") || "";
 
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -77,15 +127,13 @@ export default function Challenge() {
   const [revealed, setRevealed] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [startTime, setStartTime] = useState(Date.now());
-  const [availableQuizzes, setAvailableQuizzes] = useState([]);
+  const [availableQuizzes, setAvailableQuizzes] = useState(() => readCachedChallenges(selectedCategory));
   const [loadingQuizzes, setLoadingQuizzes] = useState(!slug);
   const [quizzesError, setQuizzesError] = useState("");
   const [quizHasMore, setQuizHasMore] = useState(true);
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(!slug);
   const [categoriesError, setCategoriesError] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedCategory = searchParams.get("category") || "";
 
   const quizOffsetRef = useRef(0);
   const quizHasMoreRef = useRef(true);
@@ -100,8 +148,8 @@ export default function Challenge() {
   const question = questions[current];
   const totalQuestions = questions.length;
   const availableChallengeCards = useMemo(() => {
-    if (!availableQuizzes.length) return [];
-    return availableQuizzes.map((quiz, index) => ({
+  if (!availableQuizzes.length) return [];
+  return availableQuizzes.map((quiz, index) => ({
       slug: quiz.slug,
       title: quiz.title,
       description: quiz.description || "You know you want to tap in.",
@@ -117,6 +165,34 @@ export default function Challenge() {
         placeholderStreaks[index % placeholderStreaks.length],
     }));
   }, [availableQuizzes]);
+
+  const hasAvailableChallenges = availableChallengeCards.length > 0;
+
+  const ChallengeGridSkeleton = () => (
+    <div className="grid gap-4 md:grid-cols-2">
+      {Array.from({ length: SKELETON_CARD_COUNT }).map((_, index) => (
+        <div
+          key={index}
+          className="space-y-3 rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[0_15px_40px_rgba(2,6,23,0.35)] animate-pulse"
+        >
+          <div className="h-3 w-32 rounded-full bg-muted/70" />
+          <div className="space-y-2">
+            <div className="h-5 w-4/5 rounded-full bg-muted/60" />
+            <div className="h-3 w-3/5 rounded-full bg-muted/50" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-2 w-3/4 rounded-full bg-muted/50" />
+            <div className="h-2 w-1/2 rounded-full bg-muted/50" />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <div className="h-12 rounded-2xl border border-border/60 bg-popover/70" />
+            <div className="h-12 rounded-2xl border border-border/60 bg-popover/70" />
+          </div>
+          <div className="h-3 rounded-full bg-muted/60" />
+        </div>
+      ))}
+    </div>
+  );
 
   useEffect(() => {
     return () => {
@@ -151,9 +227,16 @@ export default function Challenge() {
         const payload = Array.isArray(response) ? { items: response } : response || {};
         const items = Array.isArray(payload.items) ? payload.items : [];
         if (reset) {
-          safeSetState(setAvailableQuizzes, () => items);
+          safeSetState(setAvailableQuizzes, () => {
+            cacheChallengeList(selectedCategory, items);
+            return items;
+          });
         } else {
-          safeSetState(setAvailableQuizzes, (prev) => [...prev, ...items]);
+          safeSetState(setAvailableQuizzes, (prev) => {
+            const next = [...prev, ...items];
+            cacheChallengeList(selectedCategory, next);
+            return next;
+          });
         }
 
         const hasMore =
@@ -174,69 +257,68 @@ export default function Challenge() {
     [selectedCategory, slug]
   );
 
-useEffect(() => {
-  if (!slug) {
-    return;
-  }
+  useEffect(() => {
+    if (!slug) {
+      return;
+    }
 
-  const played = readPlayedChallenges();
-  if (played.has(slug)) {
-    navigate("/", {
-      state: { notice: "You’ve already played this challenge. Try another one!" },
-      replace: true,
-    });
-  }
-}, [slug, navigate]);
+    const played = readPlayedChallenges();
+    if (played.has(slug)) {
+      navigate("/", {
+        state: { notice: "You’ve already played this challenge. Try another one!" },
+        replace: true,
+      });
+    }
+  }, [slug, navigate]);
 
-useEffect(() => {
-  if (!slug) return;
+  useEffect(() => {
+    if (!slug) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  fetchQuestions(slug)
-    .then((data) => {
-      if (!cancelled) {
-        setQuestions(Array.isArray(data) && data.length ? data : fallbackQuestions);
-      }
-    })
-    .catch(() => {
-      if (!cancelled) {
-        setQuestions(fallbackQuestions);
-      }
-    });
+    fetchQuestions(slug)
+      .then((data) => {
+        if (!cancelled) {
+          setQuestions(buildQuestionSet(data));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQuestions(buildQuestionSet());
+        }
+      });
 
-  return () => {
-    cancelled = true;
-  };
-}, [slug]);
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
-useEffect(() => {
-  if (!slug) return;
+  useEffect(() => {
+    if (!slug) return;
 
-  setCurrent(0);
-  setScore(0);
-  setSelected(null);
-  setRevealed(false);
-  setTimeLeft(QUESTION_TIME);
-  setStartTime(Date.now());
-}, [slug]);
+    setCurrent(0);
+    setScore(0);
+    setSelected(null);
+    setRevealed(false);
+    setTimeLeft(QUESTION_TIME);
+    setStartTime(Date.now());
+  }, [slug]);
 
-useEffect(() => {
-  if (slug) {
-    setLoadingQuizzes(false);
-    setQuizzesError("");
-    setAvailableQuizzes([]);
+  useEffect(() => {
+    if (slug) {
+      setLoadingQuizzes(false);
+      setQuizzesError("");
+      setAvailableQuizzes([]);
+      quizOffsetRef.current = 0;
+      quizHasMoreRef.current = false;
+      setQuizHasMore(false);
+      return;
+    }
+
     quizOffsetRef.current = 0;
-    quizHasMoreRef.current = false;
-    setQuizHasMore(false);
-    return;
-  }
-
-  quizOffsetRef.current = 0;
-  quizHasMoreRef.current = true;
-  setQuizHasMore(true);
-  setAvailableQuizzes([]);
-  fetchQuizPage({ reset: true });
+    quizHasMoreRef.current = true;
+    setQuizHasMore(true);
+    fetchQuizPage({ reset: true });
   }, [slug, selectedCategory, fetchQuizPage]);
 
   const loadMoreElement = loadMoreTriggerRef.current;
@@ -259,39 +341,39 @@ useEffect(() => {
     };
   }, [slug, fetchQuizPage, loadMoreElement]);
 
-useEffect(() => {
-  if (slug) {
-    setCategories([]);
-    setCategoriesError("");
-    setLoadingCategories(false);
-    return;
-  }
+  useEffect(() => {
+    if (slug) {
+      setCategories([]);
+      setCategoriesError("");
+      setLoadingCategories(false);
+      return;
+    }
 
-  let cancelled = false;
-  setLoadingCategories(true);
-  fetchCategories()
-    .then((data) => {
-      if (!cancelled) {
-        setCategories(Array.isArray(data) ? data : []);
-        setCategoriesError("");
-      }
-    })
-    .catch(() => {
-      if (!cancelled) {
-        setCategories([]);
-        setCategoriesError("Could not load the category overview right now.");
-      }
-    })
-    .finally(() => {
-      if (!cancelled) {
-        setLoadingCategories(false);
-      }
-    });
+    let cancelled = false;
+    setLoadingCategories(true);
+    fetchCategories()
+      .then((data) => {
+        if (!cancelled) {
+          setCategories(Array.isArray(data) ? data : []);
+          setCategoriesError("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCategories([]);
+          setCategoriesError("Could not load the category overview right now.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingCategories(false);
+        }
+      });
 
-  return () => {
-    cancelled = true;
-  };
-}, [slug]);
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   useEffect(() => {
     setTimeLeft(QUESTION_TIME);
@@ -377,7 +459,7 @@ useEffect(() => {
   if (!slug) {
     return (
       <div className="space-y-6">
-        <Card className="border-border/70 bg-card/95 shadow-[0_25px_100px_rgba(2,6,23,0.45)]">
+        <Card className="border-border/70 bg-card/95">
           <CardHeader className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
               Challenge Arcade
@@ -415,18 +497,23 @@ useEffect(() => {
               onSelectCategory={handleCategorySelect}
             />
           </div>
-          {loadingQuizzes ? (
-            <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
-              Loading quizzes from the arena...
-            </Card>
-          ) : availableChallengeCards.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {availableChallengeCards.map((challenge) => (
-                <ChallengeCard key={challenge.slug} challenge={challenge} ctaLabel="Play" />
-              ))}
-            </div>
+          {hasAvailableChallenges ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                {availableChallengeCards.map((challenge) => (
+                  <ChallengeCard key={challenge.slug} challenge={challenge} ctaLabel="Play" />
+                ))}
+              </div>
+              {loadingQuizzes && (
+                <div className="rounded-2xl border border-border/60 bg-popover/80 p-4 text-sm text-muted-foreground">
+                  Syncing the arena for your selection…
+                </div>
+              )}
+            </>
+          ) : loadingQuizzes ? (
+            <ChallengeGridSkeleton />
           ) : (
-            <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
+            <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
               {quizzesError || "No quizzes found. Add some via the backend to get started."}
             </Card>
           )}
@@ -451,13 +538,13 @@ useEffect(() => {
 
   if (!question) {
     return (
-      <Card className="mx-auto max-w-2xl border-border/60 bg-card/95 p-6 text-center">
+      <Card className="mx-auto max-w-2xl border-border/70 bg-card/95 p-6 text-center">
         <p className="text-sm font-semibold text-muted-foreground">{texts.challenge.emptyState}</p>
       </Card>
     );
   }
 
-  return (
+    return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:h-[calc(100vh-180px)] lg:flex-row lg:gap-6">
       <Card className="flex flex-1 flex-col border-border/70 bg-card/95 lg:overflow-hidden">
         <CardHeader className="space-y-4">
@@ -541,7 +628,7 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/30 bg-gradient-to-b from-primary/90 to-primary/60 text-primary-foreground">
+        <Card className="border-border/70 bg-card/95 text-primary-foreground">
           <CardContent className="space-y-2 p-5">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">
               <span>{texts.challenge.timerLabel}</span>
@@ -552,7 +639,7 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/95">
+        <Card className="border-border/70 bg-card/95">
           <CardContent className="space-y-2 p-5">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               <span>{texts.challenge.progressLabel}</span>
@@ -565,7 +652,7 @@ useEffect(() => {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-popover/70">
+        <Card className="border-border/70 bg-card/95">
           <CardContent className="space-y-2 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               Challenge

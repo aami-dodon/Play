@@ -161,7 +161,7 @@ export default function Home() {
         </Dialog>
       )}
 
-      <Card className="hero-card grid gap-8 border-border/70 bg-card/95 p-6 shadow-[0_25px_100px_rgba(2,6,23,0.55)] lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
+      <Card className="grid gap-8 border-border/70 bg-card/95 p-6 lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
             <Badge variant="secondary" className="rounded-full px-4 text-[0.6rem] tracking-[0.35em]">
@@ -208,7 +208,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-primary/40 bg-gradient-to-b from-primary/15 to-background">
+          <Card className="border-border/70 bg-card/95">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Live queue</CardTitle>
               <CardDescription className="text-sm">
@@ -247,7 +247,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 bg-popover/80">
+          <Card className="border-border/70 bg-card/95">
             <CardContent className="flex items-center justify-between gap-4 px-5 py-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
@@ -274,7 +274,7 @@ export default function Home() {
           </h2>
         </div>
         {loadingFeatured ? (
-          <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
+          <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
             Loading challenges...
           </Card>
         ) : (
@@ -285,11 +285,16 @@ export default function Home() {
               ))}
             </div>
             {featuredFallback && (
-              <Card className="border-dashed border-border/50 bg-background/50 p-4 text-sm text-muted-foreground">
+              <Card className="border-dashed border-border/70 bg-background/50 p-4 text-sm text-muted-foreground">
                 No challenges found in the database yet. Add a quiz through the backend to see it on
                 the home page.
               </Card>
             )}
+            <div className="flex justify-end">
+              <Button asChild variant="link">
+                <Link to="/challenge">View all challenges →</Link>
+              </Button>
+            </div>
           </>
         )}
       </section>
@@ -304,7 +309,7 @@ export default function Home() {
           </p>
         </div>
         {loadingLeaderboard ? (
-          <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
+          <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
             Loading leaderboard...
           </Card>
         ) : (

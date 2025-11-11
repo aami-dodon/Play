@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { texts, resultShareText } from "@/texts";
-import { hasPlayedChallenge } from "@/lib/playedChallenges";
+import { hasPlayedChallenge, saveLocalPlayerName } from "@/lib/playedChallenges";
 
 export default function Results() {
   const { slug } = useParams();
@@ -33,6 +33,14 @@ export default function Results() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const friendlyChallengeName = useMemo(() => {
+    if (!slug) return "Arcade Challenge";
+    return slug
+      .split("-")
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
+  }, [slug]);
 
   const feedbackLine = useMemo(() => {
     const ratio = total ? score / total : 0;
@@ -55,6 +63,7 @@ export default function Results() {
     category: slug || "Arcade",
     time: `${entry.completion_time_seconds || "?"}s`,
     rank: entry.rank || index + 1,
+    challengeName: friendlyChallengeName,
   }));
 
   useEffect(() => {
@@ -73,6 +82,7 @@ export default function Results() {
       const data = await fetchLeaderboard(slug);
       setLeaderboard(data);
       setSubmitted(true);
+      saveLocalPlayerName(username);
       toast.success(texts.toasts.achievement);
     } catch (error) {
       console.error("Failed to submit leaderboard entry:", error);
@@ -101,7 +111,7 @@ export default function Results() {
 
   return (
     <div className="space-y-8">
-      <Card className="border-border/70 bg-card/95 shadow-[0_35px_120px_rgba(2,6,23,0.55)]">
+      <Card className="border-border/70 bg-card/95">
         <CardHeader className="space-y-3 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
             {texts.results.heading}

@@ -171,7 +171,6 @@
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
 .hero-card > * {
@@ -179,9 +178,8 @@
   z-index: 1;
 }
 
-.hero-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 30px 45px rgba(2, 6, 23, 0.35);
+.hero-subtitle-animate {
+  animation: hero-subtitle-glide 1.5s ease-out;
 }
 
 .hero-title-animate {
@@ -198,10 +196,6 @@
 
 .hero-stats-animate {
   animation: hero-stats-pulse 9s ease-in-out infinite alternate;
-}
-
-.hero-subtitle-animate {
-  animation: hero-subtitle-glide 1.5s ease-out;
 }
 
 @keyframes hero-card-orbit {

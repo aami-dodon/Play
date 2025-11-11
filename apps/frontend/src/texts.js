@@ -206,19 +206,67 @@ export const texts = {
     filters: ["All Time", "This Week", "Today"],
     fallbackCaption: "Leaderboard is taking a dramatic refresh—enjoy this standby flex.",
     mockPlayers: [
-      { player: "PixelBandit", score: 9800, category: "Emoji Cinema", time: "36s" },
-      { player: "LagWizard", score: 9475, category: "Wi-Fi Whisperer", time: "41s" },
-      { player: "TriviaGoblin", score: 9100, category: "Historic Drama", time: "55s" },
-      { player: "404NotFound", score: 8800, category: "Emoji Cinema", time: "60s" },
-      { player: "ObviousPlant", score: 8600, category: "Wi-Fi Whisperer", time: "64s" },
+      {
+        player: "PixelBandit",
+        score: 9800,
+        category: "Emoji Cinema",
+        time: "36s",
+        challengeName: "Emoji Cinema Mayhem",
+      },
+      {
+        player: "LagWizard",
+        score: 9475,
+        category: "Wi-Fi Whisperer",
+        time: "41s",
+        challengeName: "Latency Legends",
+      },
+      {
+        player: "TriviaGoblin",
+        score: 9100,
+        category: "Historic Drama",
+        time: "55s",
+        challengeName: "Historic Drama Duel",
+      },
+      {
+        player: "404NotFound",
+        score: 8800,
+        category: "Emoji Cinema",
+        time: "60s",
+        challengeName: "Emoji Cinema Mayhem",
+      },
+      {
+        player: "ObviousPlant",
+        score: 8600,
+        category: "Wi-Fi Whisperer",
+        time: "64s",
+        challengeName: "Latency Legends",
+      },
     ],
   },
 };
 
 export const leaderboardPreviewPlayers = [
-  { player: "PixelBandit", score: 9800, category: "Emoji Cinema", time: "36s" },
-  { player: "LagWizard", score: 9475, category: "Wi-Fi Whisperer", time: "41s" },
-  { player: "TriviaGoblin", score: 9100, category: "Historic Drama", time: "55s" },
+  {
+    player: "PixelBandit",
+    score: 9800,
+    category: "Emoji Cinema",
+    time: "36s",
+    challengeName: "Emoji Cinema Mayhem",
+  },
+  {
+    player: "LagWizard",
+    score: 9475,
+    category: "Wi-Fi Whisperer",
+    time: "41s",
+    challengeName: "Latency Legends",
+  },
+  {
+    player: "TriviaGoblin",
+    score: 9100,
+    category: "Historic Drama",
+    time: "55s",
+    challengeName: "Historic Drama Duel",
+  },
 ];
 
 export const resultShareText = (score) =>

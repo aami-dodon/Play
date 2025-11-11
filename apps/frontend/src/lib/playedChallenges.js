@@ -1,4 +1,5 @@
 const PLAYED_CHALLENGES_KEY = "played_challenges";
+const PLAYER_ALIAS_KEY = "player_alias";
 
 function safeGetWindow() {
   return typeof window === "undefined" ? null : window;
@@ -33,4 +34,23 @@ export function hasPlayedChallenge(slug) {
   if (!slug) return false;
   const played = readPlayedChallenges();
   return played.has(slug);
+}
+
+export function readLocalPlayerName() {
+  const win = safeGetWindow();
+  if (!win) return null;
+  const stored = win.localStorage.getItem(PLAYER_ALIAS_KEY);
+  if (!stored) return null;
+  const trimmed = stored.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+export function saveLocalPlayerName(name) {
+  const win = safeGetWindow();
+  if (!win) return;
+  if (typeof name !== "string" || !name.trim()) {
+    win.localStorage.removeItem(PLAYER_ALIAS_KEY);
+    return;
+  }
+  win.localStorage.setItem(PLAYER_ALIAS_KEY, name.trim());
 }

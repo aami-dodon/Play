@@ -1,3 +1,14 @@
+const asNumberMap = (raw = {}) => {
+  if (!raw || typeof raw !== "object") return {};
+  return Object.entries(raw).reduce((acc, [key, value]) => {
+    const normalizedKey = (key && typeof key === "string" ? key.trim() : "") || "Uncategorized";
+    const num = Number(value ?? 0);
+    if (!Number.isFinite(num)) return acc;
+    acc[normalizedKey] = num;
+    return acc;
+  }, {});
+};
+
 export function formatLeaderboardRows(entries = [], { fallbackCategory = "Arcade" } = {}) {
   if (!Array.isArray(entries) || entries.length === 0) {
     return [];
@@ -11,6 +22,25 @@ export function formatLeaderboardRows(entries = [], { fallbackCategory = "Arcade
     const timeLabel =
       entry?.time ||
       (typeof bestTime === "number" && Number.isFinite(bestTime) ? `${bestTime}s` : "—");
+    const challengeSlug = entry?.top_challenge_slug || entry?.challenge_slug || entry?.slug || null;
+    const rawChallengeName =
+      entry?.challenge_name ||
+      entry?.challengeName ||
+      entry?.top_challenge ||
+      entry?.quiz_title ||
+      entry?.challenge ||
+      null;
+    const fallbackChallengeName =
+      typeof challengeSlug === "string"
+        ? challengeSlug
+            .split("-")
+            .filter(Boolean)
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")
+        : null;
+    const challengeName = rawChallengeName || fallbackChallengeName || "Mystery challenge";
+    const categoryScores = asNumberMap(entry?.category_scores || entry?.categoryScores || null);
+    const challengeScores = asNumberMap(entry?.challenge_scores || entry?.challengeScores || null);
 
     return {
       player: username,
@@ -18,6 +48,10 @@ export function formatLeaderboardRows(entries = [], { fallbackCategory = "Arcade
       category,
       time: timeLabel,
       rank: entry?.rank ?? index + 1,
+      challengeName,
+      challengeSlug,
+      categoryScores,
+      challengeScores,
     };
   });
 }

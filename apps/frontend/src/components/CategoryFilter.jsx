@@ -8,12 +8,6 @@ export default function CategoryFilter({
   onSelectCategory,
 }) {
   const hasCategories = Array.isArray(categories) && categories.length > 0;
-  const helperText = loading
-    ? "Syncing with the arena…"
-    : hasCategories
-    ? `${categories.length} categories live`
-    : "Add a quiz to unlock category filters.";
-
   const items = [
     { value: "all", label: "All categories" },
     ...(hasCategories
@@ -25,23 +19,16 @@ export default function CategoryFilter({
   ];
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-3 text-right">
-        <div className="space-y-1">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-            Filter the chaos
-          </p>
-          <p className="text-sm font-semibold text-foreground">Pick a category</p>
-        </div>
-        <Select
-          value={selectedCategory || "all"}
-          onValueChange={(value) =>
-            onSelectCategory && onSelectCategory(value === "all" ? "" : value)
-          }
-        >
-          <SelectTrigger className="w-[180px] justify-between border border-border/60 bg-background/80 text-sm">
-            <SelectValue placeholder="All categories" />
-          </SelectTrigger>
+    <div className="flex items-center justify-end">
+      <Select
+        value={selectedCategory || "all"}
+        onValueChange={(value) =>
+          onSelectCategory && onSelectCategory(value === "all" ? "" : value)
+        }
+      >
+        <SelectTrigger className="w-[180px] justify-between border border-border/60 bg-background/80 text-sm">
+          <SelectValue placeholder="All categories" />
+        </SelectTrigger>
           <SelectContent>
             {items.map((item) => (
               <SelectItem key={item.value || "all"} value={item.value}>
@@ -49,9 +36,7 @@ export default function CategoryFilter({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
-      </div>
-      <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground">{helperText}</p>
+      </Select>
       {error && (
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-destructive">
           {error}

@@ -12,14 +12,18 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchGlobalLeaderboard } from "@/api";
 import { formatLeaderboardRows } from "@/lib/leaderboard";
+import { readLocalPlayerName } from "@/lib/playedChallenges";
 import { texts } from "@/texts";
 import { Button } from "@/components/ui/button";
 
 const LEADERBOARD_PAGE_SIZE = 15;
+const HIGHLIGHT_PLAYER_NAME = "GlitchQueen";
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState([]);
+  const [localPlayerName, setLocalPlayerName] = useState(null);
   const [meta, setMeta] = useState({ loading: true, hasMore: true, error: "" });
+  const [challengeLookup, setChallengeLookup] = useState({});
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(true);
   const loadingRef = useRef(false);
@@ -44,11 +48,13 @@ export default function Leaderboard() {
         const payload = await fetchGlobalLeaderboard({ limit: LEADERBOARD_PAGE_SIZE, offset });
         const normalized = Array.isArray(payload) ? { entries: payload } : payload || {};
         const items = Array.isArray(normalized.entries) ? normalized.entries : [];
+        const lookupEntries = normalized.challengeLookup ?? {};
         if (reset) {
           safeSetState(setEntries, () => items);
         } else {
           safeSetState(setEntries, (prev) => [...prev, ...items]);
         }
+        safeSetState(setChallengeLookup, () => lookupEntries);
 
         const hasMore =
           typeof normalized.hasMore === "boolean"
@@ -78,8 +84,13 @@ export default function Leaderboard() {
     hasMoreRef.current = true;
     safeSetState(setEntries, () => []);
     safeSetState(setMeta, () => ({ loading: true, hasMore: true, error: "" }));
+    safeSetState(setChallengeLookup, () => ({}));
     fetchLeaderboardPage({ reset: true });
   }, [fetchLeaderboardPage, safeSetState]);
+
+  useEffect(() => {
+    setLocalPlayerName(readLocalPlayerName());
+  }, [readLocalPlayerName]);
 
   const loadMoreElement = loadMoreRef.current;
   useEffect(() => {
@@ -115,6 +126,47 @@ export default function Leaderboard() {
     return texts.leaderboard.mockPlayers;
   }, [entries]);
 
+  const highlightPlayerName = localPlayerName || HIGHLIGHT_PLAYER_NAME;
+
+  const leaderboardSummary = useMemo(() => {
+    const totalPlayers = baseRows.length;
+    if (totalPlayers === 0) {
+      return {
+        highlightPlayer: highlightPlayerName,
+        currentRank: null,
+        beatCount: null,
+        totalPlayers: 0,
+      };
+    }
+
+    const highlightIsFallback = highlightPlayerName === HIGHLIGHT_PLAYER_NAME;
+    const preferredRow =
+      baseRows.find((player) => player.player === highlightPlayerName) ||
+      (highlightIsFallback ? baseRows[0] : null);
+
+    if (!preferredRow) {
+      return {
+        highlightPlayer: highlightPlayerName,
+        currentRank: null,
+        beatCount: null,
+        totalPlayers,
+      };
+    }
+    const derivedRank =
+      typeof preferredRow?.rank === "number" && Number.isFinite(preferredRow.rank) && preferredRow.rank > 0
+        ? preferredRow.rank
+        : baseRows.indexOf(preferredRow) + 1;
+    const beatCount =
+      typeof derivedRank === "number" ? Math.max(totalPlayers - derivedRank, 0) : null;
+
+    return {
+      highlightPlayer: preferredRow.player,
+      currentRank: derivedRank,
+      beatCount,
+      totalPlayers,
+    };
+  }, [baseRows, highlightPlayerName]);
+
   const leaderboardByFilter = useMemo(() => {
     const weekly = baseRows.map((player, index) => ({
       ...player,
@@ -146,10 +198,14 @@ export default function Leaderboard() {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Badge variant="secondary" className="rounded-full px-4">
-            Current rank · #42
+            Current rank · {leaderboardSummary.currentRank ? `#${leaderboardSummary.currentRank}` : "—"}
           </Badge>
           <Badge variant="outline" className="rounded-full px-4">
-            Congrats, you beat 3 people! Out of 4.
+            {leaderboardSummary.beatCount != null
+              ? `Congrats, you beat ${leaderboardSummary.beatCount} people! Out of ${
+                  leaderboardSummary.totalPlayers > 0 ? leaderboardSummary.totalPlayers : "—"
+                }.`
+              : "Crunching leaderboard stats to flex your rank."}
           </Badge>
           <span className="text-sm font-medium text-muted-foreground">Flex responsibly</span>
         </CardContent>
@@ -166,7 +222,7 @@ export default function Leaderboard() {
         {texts.leaderboard.filters.map((filter) => (
           <TabsContent key={filter} value={filter}>
             {meta.loading && filter !== "All Time" ? (
-              <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
+              <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
                 Loading {filter.toLowerCase()} leaderboard...
               </Card>
             ) : (
@@ -174,8 +230,9 @@ export default function Leaderboard() {
                 title={`${filter} leaderboard`}
                 subtitle={filter === "All Time" ? "Legends only." : "Still counts."}
                 players={leaderboardByFilter[filter] || []}
-                highlightPlayer="GlitchQueen"
+                highlightPlayer={leaderboardSummary.highlightPlayer}
                 caption={filter === "All Time" && meta.error ? meta.error : undefined}
+                challengeLookup={challengeLookup}
               />
             )}
           </TabsContent>
