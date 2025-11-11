@@ -60,6 +60,18 @@ function decorateChallenges(quizzes) {
   };
 }
 
+function extractQuizItems(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.items)) return payload.items;
+  return [];
+}
+
+function extractLeaderboardEntries(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.entries)) return payload.entries;
+  return [];
+}
+
 export default function Home() {
   const [quizzes, setQuizzes] = useState([]);
   const [overallLeaderboard, setOverallLeaderboard] = useState([]);
@@ -81,14 +93,14 @@ export default function Home() {
       if (!mounted) return;
 
       if (featuredRes.status === "fulfilled") {
-        setQuizzes(featuredRes.value);
+        setQuizzes(extractQuizItems(featuredRes.value));
       } else {
         console.error("Failed to load featured challenges:", featuredRes.reason);
         setQuizzes([]);
       }
 
       if (leaderboardRes.status === "fulfilled") {
-        setOverallLeaderboard(leaderboardRes.value);
+        setOverallLeaderboard(extractLeaderboardEntries(leaderboardRes.value));
       } else {
         console.error("Failed to load leaderboard:", leaderboardRes.reason);
         setOverallLeaderboard([]);

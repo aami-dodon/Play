@@ -43,6 +43,9 @@ const express = require("express");
 const router = express.Router();
 const { prisma } = require("../prismaClient");
 
+const QUIZ_PAGE_SIZE_DEFAULT = 12;
+const QUIZ_PAGE_SIZE_MAX = 50;
+
 function parseFeaturedFlag(value) {
   if (value === undefined || value === null) return null;
   if (value === "true" || value === "1") return true;
@@ -122,13 +125,20 @@ router.get("/categories", async (_req, res) => {
  *       - Quizzes
  *     responses:
  *       200:
- *         description: Array of quizzes
+ *         description: Paginated list of quizzes
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: "#/components/schemas/Quiz"
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Quiz"
+ *                 hasMore:
+ *                   type: boolean
+ *                 nextOffset:
+ *                   type: integer
  *       500:
  *         description: Internal server error
  *         content:
@@ -149,6 +159,21 @@ router.get("/categories", async (_req, res) => {
  *         schema:
  *           type: boolean
  *         description: Optional flag to filter featured quizzes.
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *           minimum: 1
+ *           maximum: 50
+ *         description: Number of quizzes per page.
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *           minimum: 0
+ *         description: List offset for pagination.
  */
 router.get("/", async (req, res) => {
   try {
@@ -164,15 +189,29 @@ router.get("/", async (req, res) => {
       where.featured = featuredFlag;
     }
 
+    const limitParam = parseInt(req.query.limit, 10);
+    const offsetParam = parseInt(req.query.offset, 10);
+    const limit = Number.isFinite(limitParam)
+      ? Math.min(Math.max(limitParam, 1), QUIZ_PAGE_SIZE_MAX)
+      : QUIZ_PAGE_SIZE_DEFAULT;
+    const offset = Number.isFinite(offsetParam) && offsetParam >= 0 ? offsetParam : 0;
+    const fetchLimit = limit + 1;
+
     const quizzes = await prisma.quiz.findMany({
       where,
       orderBy: [
         { created_at: "desc" },
         { id: "desc" },
       ],
+      take: fetchLimit,
+      skip: offset,
     });
 
-    res.json(quizzes);
+    const hasMore = quizzes.length > limit;
+    const items = hasMore ? quizzes.slice(0, limit) : quizzes;
+    const nextOffset = offset + items.length;
+
+    res.json({ items, hasMore, nextOffset });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

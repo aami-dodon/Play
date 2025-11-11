@@ -75,6 +75,7 @@ export default function Results() {
       setSubmitted(true);
       toast.success(texts.toasts.achievement);
     } catch (error) {
+      console.error("Failed to submit leaderboard entry:", error);
       toast.error("Leaderboard had a meltdown. Try again.");
     } finally {
       setSubmitting(false);
@@ -93,6 +94,7 @@ export default function Results() {
         throw new Error("Share unavailable");
       }
     } catch (error) {
+      console.error("Share failed:", error);
       toast.error("Share feature took a nap. Manual bragging only.");
     }
   };

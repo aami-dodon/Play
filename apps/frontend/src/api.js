@@ -27,9 +27,11 @@ export async function fetchLeaderboard(slug) {
   return res.data;
 }
 
-export async function fetchGlobalLeaderboard(limit) {
-  const res = await axios.get(`${API_BASE}/leaderboard`, {
-    params: typeof limit === "number" ? { limit } : undefined,
-  });
+export async function fetchGlobalLeaderboard(limitOrOptions = {}) {
+  const params =
+    typeof limitOrOptions === "number"
+      ? { limit: limitOrOptions }
+      : limitOrOptions || {};
+  const res = await axios.get(`${API_BASE}/leaderboard`, { params });
   return res.data;
 }

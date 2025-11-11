@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ const placeholderPlayers = ["2.1k online", "987 online", "1.4k online", "612 onl
 const placeholderStreaks = ["13 wins", "8 wins", "22 wins", "5 wins"];
 
 const PLAYED_CHALLENGES_KEY = "played_challenges";
+const QUIZ_PAGE_SIZE = 8;
 
 function readPlayedChallenges() {
   if (typeof window === "undefined") return new Set();
@@ -79,11 +80,22 @@ export default function Challenge() {
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(!slug);
   const [quizzesError, setQuizzesError] = useState("");
+  const [quizHasMore, setQuizHasMore] = useState(true);
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(!slug);
   const [categoriesError, setCategoriesError] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get("category") || "";
+
+  const quizOffsetRef = useRef(0);
+  const quizHasMoreRef = useRef(true);
+  const loadingQuizzesRef = useRef(false);
+  const loadMoreTriggerRef = useRef(null);
+  const isMountedRef = useRef(true);
+  const safeSetState = (setter, value) => {
+    if (!isMountedRef.current) return;
+    setter(value);
+  };
 
   const question = questions[current];
   const totalQuestions = questions.length;
@@ -106,10 +118,61 @@ export default function Challenge() {
     }));
   }, [availableQuizzes]);
 
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const handleCategorySelect = (categoryName) => {
     const nextParams = categoryName ? { category: categoryName } : {};
     setSearchParams(nextParams, { replace: true });
   };
+
+  const fetchQuizPage = useCallback(
+    async ({ reset = false } = {}) => {
+      if (slug) return;
+      if (!reset && !quizHasMoreRef.current) return;
+      if (loadingQuizzesRef.current) return;
+
+      loadingQuizzesRef.current = true;
+      safeSetState(setLoadingQuizzes, true);
+      safeSetState(setQuizzesError, "");
+
+      const offset = reset ? 0 : quizOffsetRef.current;
+      const params = {
+        limit: QUIZ_PAGE_SIZE,
+        offset,
+        ...(selectedCategory ? { category: selectedCategory } : {}),
+      };
+
+      try {
+        const response = await fetchQuizzes(params);
+        const payload = Array.isArray(response) ? { items: response } : response || {};
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        if (reset) {
+          safeSetState(setAvailableQuizzes, () => items);
+        } else {
+          safeSetState(setAvailableQuizzes, (prev) => [...prev, ...items]);
+        }
+
+        const hasMore =
+          typeof payload.hasMore === "boolean" ? payload.hasMore : items.length === QUIZ_PAGE_SIZE;
+        quizHasMoreRef.current = hasMore;
+        safeSetState(setQuizHasMore, hasMore);
+
+        const nextOffset = payload.nextOffset ?? (offset + items.length);
+        quizOffsetRef.current = nextOffset;
+      } catch (error) {
+        console.error("Failed to load quiz page:", error);
+        safeSetState(setQuizzesError, "Could not load the arena. Try refreshing.");
+      } finally {
+        loadingQuizzesRef.current = false;
+        safeSetState(setLoadingQuizzes, false);
+      }
+    },
+    [selectedCategory, slug]
+  );
 
 useEffect(() => {
   if (!slug) {
@@ -163,35 +226,38 @@ useEffect(() => {
     setLoadingQuizzes(false);
     setQuizzesError("");
     setAvailableQuizzes([]);
+    quizOffsetRef.current = 0;
+    quizHasMoreRef.current = false;
+    setQuizHasMore(false);
     return;
   }
 
-  let cancelled = false;
-  setLoadingQuizzes(true);
-  const params = selectedCategory ? { category: selectedCategory } : undefined;
-  fetchQuizzes(params)
-    .then((data) => {
-      if (!cancelled) {
-        setAvailableQuizzes(Array.isArray(data) ? data : []);
-        setQuizzesError("");
-      }
-    })
-    .catch(() => {
-      if (!cancelled) {
-        setAvailableQuizzes([]);
-        setQuizzesError("Could not load the arena. Try refreshing.");
-      }
-    })
-    .finally(() => {
-      if (!cancelled) {
-        setLoadingQuizzes(false);
-      }
-    });
+  quizOffsetRef.current = 0;
+  quizHasMoreRef.current = true;
+  setQuizHasMore(true);
+  setAvailableQuizzes([]);
+  fetchQuizPage({ reset: true });
+  }, [slug, selectedCategory, fetchQuizPage]);
 
-  return () => {
-    cancelled = true;
-  };
-}, [slug, selectedCategory]);
+  const loadMoreElement = loadMoreTriggerRef.current;
+  useEffect(() => {
+    if (slug || !loadMoreElement) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && quizHasMoreRef.current && !loadingQuizzesRef.current) {
+          fetchQuizPage();
+        }
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [slug, fetchQuizPage, loadMoreElement]);
 
 useEffect(() => {
   if (slug) {
@@ -364,6 +430,20 @@ useEffect(() => {
               {quizzesError || "No quizzes found. Add some via the backend to get started."}
             </Card>
           )}
+          {quizHasMore && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full px-6"
+                onClick={() => fetchQuizPage()}
+                disabled={loadingQuizzes}
+              >
+                {loadingQuizzes ? "Loading more challenges..." : "Load more challenges"}
+              </Button>
+            </div>
+          )}
+          <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />
         </section>
       </div>
     );

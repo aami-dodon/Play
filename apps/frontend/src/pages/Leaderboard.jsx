@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { Badge } from "@/components/ui/badge";
@@ -13,46 +13,107 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchGlobalLeaderboard } from "@/api";
 import { formatLeaderboardRows } from "@/lib/leaderboard";
 import { texts } from "@/texts";
+import { Button } from "@/components/ui/button";
+
+const LEADERBOARD_PAGE_SIZE = 15;
 
 export default function Leaderboard() {
-  const [overall, setOverall] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [entries, setEntries] = useState([]);
+  const [meta, setMeta] = useState({ loading: true, hasMore: true, error: "" });
+  const offsetRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
+  const loadMoreRef = useRef(null);
+  const isMountedRef = useRef(true);
+  const safeSetState = useCallback((setter, value) => {
+    if (!isMountedRef.current) return;
+    setter(value);
+  }, []);
 
-  useEffect(() => {
-    let ignore = false;
-    async function loadLeaderboard() {
+  const fetchLeaderboardPage = useCallback(
+    async ({ reset = false } = {}) => {
+      if (!reset && !hasMoreRef.current) return;
+      if (loadingRef.current) return;
+
+      loadingRef.current = true;
+      safeSetState(setMeta, (prev) => ({ ...prev, loading: true, error: reset ? "" : prev.error }));
+
+      const offset = reset ? 0 : offsetRef.current;
+
       try {
-        const data = await fetchGlobalLeaderboard(15);
-        if (!ignore) {
-          setOverall(data);
+        const payload = await fetchGlobalLeaderboard({ limit: LEADERBOARD_PAGE_SIZE, offset });
+        const normalized = Array.isArray(payload) ? { entries: payload } : payload || {};
+        const items = Array.isArray(normalized.entries) ? normalized.entries : [];
+        if (reset) {
+          safeSetState(setEntries, () => items);
+        } else {
+          safeSetState(setEntries, (prev) => [...prev, ...items]);
         }
+
+        const hasMore =
+          typeof normalized.hasMore === "boolean"
+            ? normalized.hasMore
+            : items.length === LEADERBOARD_PAGE_SIZE;
+        hasMoreRef.current = hasMore;
+        safeSetState(setMeta, (prev) => ({ ...prev, hasMore, error: "" }));
+
+        const nextOffset = normalized.nextOffset ?? (offset + items.length);
+        offsetRef.current = nextOffset;
       } catch (err) {
         console.error("Failed to load global leaderboard:", err);
-        if (!ignore) {
-          setError("Live leaderboard snoozed. Showing demo data.");
-        }
+        safeSetState(setMeta, (prev) => ({
+          ...prev,
+          error: texts.leaderboard.fallbackCaption,
+        }));
       } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
+        loadingRef.current = false;
+        safeSetState(setMeta, (prev) => ({ ...prev, loading: false }));
       }
-    }
+    },
+    [safeSetState]
+  );
 
-    loadLeaderboard();
+  useEffect(() => {
+    offsetRef.current = 0;
+    hasMoreRef.current = true;
+    safeSetState(setEntries, () => []);
+    safeSetState(setMeta, () => ({ loading: true, hasMore: true, error: "" }));
+    fetchLeaderboardPage({ reset: true });
+  }, [fetchLeaderboardPage, safeSetState]);
+
+  const loadMoreElement = loadMoreRef.current;
+  useEffect(() => {
+    if (!loadMoreElement) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMoreRef.current && !loadingRef.current) {
+          fetchLeaderboardPage();
+        }
+      },
+      { rootMargin: "200px", threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreElement);
 
     return () => {
-      ignore = true;
+      observer.disconnect();
+    };
+  }, [loadMoreElement, fetchLeaderboardPage]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
     };
   }, []);
 
   const baseRows = useMemo(() => {
-    const formatted = formatLeaderboardRows(overall, { fallbackCategory: "Arcade" });
+    const formatted = formatLeaderboardRows(entries, { fallbackCategory: "Arcade" });
     if (formatted.length) {
       return formatted;
     }
     return texts.leaderboard.mockPlayers;
-  }, [overall]);
+  }, [entries]);
 
   const leaderboardByFilter = useMemo(() => {
     const weekly = baseRows.map((player, index) => ({
@@ -104,7 +165,7 @@ export default function Leaderboard() {
         </TabsList>
         {texts.leaderboard.filters.map((filter) => (
           <TabsContent key={filter} value={filter}>
-            {loading && filter !== "All Time" ? (
+            {meta.loading && filter !== "All Time" ? (
               <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
                 Loading {filter.toLowerCase()} leaderboard...
               </Card>
@@ -114,12 +175,26 @@ export default function Leaderboard() {
                 subtitle={filter === "All Time" ? "Legends only." : "Still counts."}
                 players={leaderboardByFilter[filter] || []}
                 highlightPlayer="GlitchQueen"
-                caption={filter === "All Time" && error ? error : undefined}
+                caption={filter === "All Time" && meta.error ? meta.error : undefined}
               />
             )}
           </TabsContent>
         ))}
       </Tabs>
+      <div className="space-y-3">
+        {meta.hasMore && (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => fetchLeaderboardPage()}
+              disabled={meta.loading}
+            >
+              {meta.loading ? "Loading more leaderboard..." : "Load more leaderboard"}
+            </Button>
+          </div>
+        )}
+        <div ref={loadMoreRef} aria-hidden="true" className="h-2" />
+      </div>
     </div>
   );
 }

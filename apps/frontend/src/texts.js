@@ -204,6 +204,7 @@ export const texts = {
     title: "The Hall of Fame (and occasional shame).",
     subtitle: "Flex responsibly. Or don't.",
     filters: ["All Time", "This Week", "Today"],
+    fallbackCaption: "Leaderboard is taking a dramatic refresh—enjoy this standby flex.",
     mockPlayers: [
       { player: "PixelBandit", score: 9800, category: "Emoji Cinema", time: "36s" },
       { player: "LagWizard", score: 9475, category: "Wi-Fi Whisperer", time: "41s" },
