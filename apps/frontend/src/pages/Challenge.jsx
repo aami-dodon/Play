@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchQuestions, fetchQuizzes } from "@/api";
+import { fetchCategories, fetchQuestions, fetchQuizzes } from "@/api";
 import ChallengeCard from "@/components/ChallengeCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { texts } from "@/texts";
+import CategoryFilter from "@/components/CategoryFilter";
 
-const PLAYED_CHALLENGES_KEY = "played_challenges";
 const QUESTION_TIME = 30;
 const fallbackQuestions = [
   {
@@ -39,6 +39,8 @@ const fallbackQuestions = [
 
 const placeholderPlayers = ["2.1k online", "987 online", "1.4k online", "612 online"];
 const placeholderStreaks = ["13 wins", "8 wins", "22 wins", "5 wins"];
+
+const PLAYED_CHALLENGES_KEY = "played_challenges";
 
 function readPlayedChallenges() {
   if (typeof window === "undefined") return new Set();
@@ -77,6 +79,11 @@ export default function Challenge() {
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(!slug);
   const [quizzesError, setQuizzesError] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(!slug);
+  const [categoriesError, setCategoriesError] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category") || "";
 
   const question = questions[current];
   const totalQuestions = questions.length;
@@ -98,6 +105,11 @@ export default function Challenge() {
         placeholderStreaks[index % placeholderStreaks.length],
     }));
   }, [availableQuizzes]);
+
+  const handleCategorySelect = (categoryName) => {
+    const nextParams = categoryName ? { category: categoryName } : {};
+    setSearchParams(nextParams, { replace: true });
+  };
 
 useEffect(() => {
   if (!slug) {
@@ -156,7 +168,8 @@ useEffect(() => {
 
   let cancelled = false;
   setLoadingQuizzes(true);
-  fetchQuizzes()
+  const params = selectedCategory ? { category: selectedCategory } : undefined;
+  fetchQuizzes(params)
     .then((data) => {
       if (!cancelled) {
         setAvailableQuizzes(Array.isArray(data) ? data : []);
@@ -172,6 +185,40 @@ useEffect(() => {
     .finally(() => {
       if (!cancelled) {
         setLoadingQuizzes(false);
+      }
+    });
+
+  return () => {
+    cancelled = true;
+  };
+}, [slug, selectedCategory]);
+
+useEffect(() => {
+  if (slug) {
+    setCategories([]);
+    setCategoriesError("");
+    setLoadingCategories(false);
+    return;
+  }
+
+  let cancelled = false;
+  setLoadingCategories(true);
+  fetchCategories()
+    .then((data) => {
+      if (!cancelled) {
+        setCategories(Array.isArray(data) ? data : []);
+        setCategoriesError("");
+      }
+    })
+    .catch(() => {
+      if (!cancelled) {
+        setCategories([]);
+        setCategoriesError("Could not load the category overview right now.");
+      }
+    })
+    .finally(() => {
+      if (!cancelled) {
+        setLoadingCategories(false);
       }
     });
 
@@ -285,15 +332,22 @@ useEffect(() => {
         </Card>
 
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
                 Available challenges
               </p>
-              <p className="text-base text-muted-foreground">
+              <p className="text-2xl font-semibold text-foreground hero-subtitle-animate">
                 Tap any card to jump into that quiz instantly.
               </p>
             </div>
+            <CategoryFilter
+              categories={categories}
+              selectedCategory={selectedCategory}
+              loading={loadingCategories}
+              error={categoriesError}
+              onSelectCategory={handleCategorySelect}
+            />
           </div>
           {loadingQuizzes ? (
             <Card className="border-border/60 bg-popover/80 p-6 text-sm text-muted-foreground">
@@ -311,9 +365,9 @@ useEffect(() => {
             </Card>
           )}
         </section>
-    </div>
-  );
-}
+      </div>
+    );
+  }
 
   if (!question) {
     return (

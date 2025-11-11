@@ -52,6 +52,69 @@ function parseFeaturedFlag(value) {
 
 /**
  * @openapi
+ * /quizzes/categories:
+ *   get:
+ *     summary: Aggregate stats per quiz category
+ *     tags:
+ *       - Quizzes
+ *     responses:
+ *       200:
+ *         description: Category metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   category:
+ *                     type: string
+ *                   totalChallenges:
+ *                     type: integer
+ *                   featuredChallenges:
+ *                     type: integer
+ *                   totalQuestions:
+ *                     type: integer
+ *                   lastActivity:
+ *                     type: string
+ *                     format: date-time
+ */
+router.get("/categories", async (_req, res) => {
+  try {
+    const categories = await prisma.$queryRaw`
+      SELECT
+        q.category,
+        COUNT(DISTINCT q.id) AS total_challenges,
+        SUM(CASE WHEN q.featured THEN 1 ELSE 0 END) AS featured_challenges,
+        COALESCE(SUM(question_counts.question_count), 0) AS total_questions,
+        MAX(q.created_at) AS last_activity
+      FROM quizzes q
+      LEFT JOIN (
+        SELECT quiz_id, COUNT(*) AS question_count
+        FROM questions
+        GROUP BY quiz_id
+      ) question_counts ON question_counts.quiz_id = q.id
+      WHERE q.category IS NOT NULL
+      GROUP BY q.category
+      ORDER BY total_challenges DESC, q.category ASC
+    `;
+
+    res.json(
+      categories.map((row) => ({
+        category: row.category,
+        totalChallenges: Number(row.total_challenges),
+        featuredChallenges: Number(row.featured_challenges),
+        totalQuestions: Number(row.total_questions),
+        lastActivity: row.last_activity ? new Date(row.last_activity).toISOString() : null,
+      }))
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @openapi
  * /quizzes:
  *   get:
  *     summary: List all quizzes

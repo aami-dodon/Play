@@ -149,7 +149,7 @@ export default function Home() {
         </Dialog>
       )}
 
-      <Card className="hero-card hero-animate grid gap-8 border-border/70 bg-card/95 p-6 shadow-[0_25px_100px_rgba(2,6,23,0.55)] lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
+      <Card className="hero-card grid gap-8 border-border/70 bg-card/95 p-6 shadow-[0_25px_100px_rgba(2,6,23,0.55)] lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
             <Badge variant="secondary" className="rounded-full px-4 text-[0.6rem] tracking-[0.35em]">

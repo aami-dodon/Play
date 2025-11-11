@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { MenuIcon, Sparkles } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 
 import ThemeToggle from "./ThemeToggle.jsx";
 import { Button } from "./ui/button";
@@ -44,7 +44,13 @@ function MobileNav({ pathname }) {
       </SheetTrigger>
       <SheetContent side="left" className="gap-6">
         <div className="flex items-center gap-2 px-2 pt-4">
-          <Sparkles className="size-5 text-primary" />
+          <img
+            src="/favicon.svg"
+            alt=""
+            role="presentation"
+            aria-hidden="true"
+            className="h-7 w-7"
+          />
           <span className="text-lg font-semibold">{texts.brand.name}</span>
         </div>
         <div className="flex flex-col gap-3 px-2">
@@ -82,10 +88,14 @@ export default function Header() {
     <Card className="sticky top-4 z-40 border-border/70 bg-card/95/90 px-5 py-4 backdrop-blur-xl">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="rounded-full bg-[radial-gradient(circle_at_center,_color-mix(in_oklab,_var(--primary)_100%,_transparent)_20%,_transparent_70%)] p-2">
-              <Sparkles className="size-4 text-primary" />
-            </span>
+          <Link to="/" className="flex items-center gap-3">
+            <img
+              src="/favicon.svg"
+              alt=""
+              role="presentation"
+              aria-hidden="true"
+              className="h-10 w-10 md:h-11 md:w-11"
+            />
             <div className="flex flex-col leading-none">
               <span className="text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground">
                 {texts.brand.name}

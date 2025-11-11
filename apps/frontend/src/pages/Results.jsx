@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { texts, resultShareText } from "@/texts";
+import { hasPlayedChallenge } from "@/lib/playedChallenges";
 
 export default function Results() {
   const { slug } = useParams();
@@ -31,6 +32,7 @@ export default function Results() {
   const [submitting, setSubmitting] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
 
   const feedbackLine = useMemo(() => {
     const ratio = total ? score / total : 0;
@@ -54,6 +56,10 @@ export default function Results() {
     time: `${entry.completion_time_seconds || "?"}s`,
     rank: entry.rank || index + 1,
   }));
+
+  useEffect(() => {
+    setAlreadyPlayed(hasPlayedChallenge(slug));
+  }, [slug]);
 
   const handleSubmit = async () => {
     if (!username) return;
@@ -107,9 +113,11 @@ export default function Results() {
           <StatTiles stats={stats} />
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" className="rounded-full px-8" onClick={() => navigate(`/challenge/${slug || "demo"}`)}>
-              {texts.results.buttons.replay}
-            </Button>
+            {!alreadyPlayed && (
+              <Button size="lg" className="rounded-full px-8" onClick={() => navigate(`/challenge/${slug || "demo"}`)}>
+                {texts.results.buttons.replay}
+              </Button>
+            )}
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8">
               <Link to="/">{texts.results.buttons.tryAnother}</Link>
             </Button>
@@ -123,6 +131,11 @@ export default function Results() {
               <Share2 className="size-4" /> {texts.results.buttons.share}
             </Button>
           </div>
+          {alreadyPlayed && (
+            <p className="text-sm text-muted-foreground">
+              You already completed this challenge, so no repeat runs here. Explore another one instead.
+            </p>
+          )}
 
           {!submitted ? (
             <div className="space-y-3 rounded-2xl border border-border/60 bg-popover/80 p-4">

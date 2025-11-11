@@ -7,6 +7,11 @@ export async function fetchQuizzes(params = {}) {
   return res.data;
 }
 
+export async function fetchCategories() {
+  const res = await axios.get(`${API_BASE}/quizzes/categories`);
+  return res.data;
+}
+
 export async function fetchQuestions(slug) {
   const res = await axios.get(`${API_BASE}/quizzes/${slug}/questions`);
   return res.data;
