@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import clsx from "clsx";
 import { fetchQuestions } from "../api.js";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import "./Play.css";
 
 export default function Play() {
   const { slug } = useParams();
@@ -13,22 +17,31 @@ export default function Play() {
   const [startTime] = useState(Date.now());
 
   useEffect(() => {
+    if (!slug) return;
+    const key = `played_${slug}`;
+    const alreadyPlayed = typeof window !== "undefined" && localStorage.getItem(key);
+
+    if (alreadyPlayed) {
+      navigate("/", {
+        state: { notice: "You’ve already played this quiz. Try another one!" },
+        replace: true,
+      });
+      return;
+    }
+
+    localStorage.setItem(key, Date.now().toString());
+  }, [slug, navigate]);
+
+  useEffect(() => {
     fetchQuestions(slug).then(setQuestions);
   }, [slug]);
 
   if (questions.length === 0)
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#f4f6f8",
-          color: "#333",
-        }}
-      >
-        <p>Loading questions...</p>
+      <div className="play-page">
+        <Card className="play-card">
+          <p className="play-question">Loading questions...</p>
+        </Card>
       </div>
     );
 
@@ -57,100 +70,54 @@ export default function Play() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f4f6f8",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem",
-        fontFamily: "Inter, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: "12px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-          padding: "2rem",
-          maxWidth: "600px",
-          width: "100%",
-        }}
-      >
-        <h2 style={{ color: "#222", marginBottom: "1rem" }}>
+    <div className="play-page">
+      <Card className="play-card">
+        <p className="play-question">
           Question {current + 1} / {questions.length}
-        </h2>
-
-        <p style={{ fontSize: "1.25rem", color: "#333", lineHeight: "1.5" }}>
+        </p>
+        <p style={{ fontSize: "1rem", color: "var(--muted-foreground)", lineHeight: 1.5 }}>
           {q.question_text}
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "1.5rem" }}>
+        <div className="play-options">
           {q.options.map((option, i) => {
             const isCorrect = option === correctAnswer;
             const isSelected = selected === option;
 
-            let bg = "#fff";
-            if (selected) {
-              if (isCorrect) bg = "#d1f7d6"; // green for correct
-              if (isSelected && !isCorrect) bg = "#ffd7d7"; // red for wrong
-            }
+            const optionClass = clsx("play-option", {
+              correct: selected && isCorrect,
+              incorrect: selected && isSelected && !isCorrect,
+            });
 
             return (
-              <button
+              <Button
                 key={i}
-                onClick={() => handleAnswer(option)}
+                variant="ghost"
                 disabled={!!selected}
-                style={{
-                  padding: "0.75rem 1rem",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc",
-                  background: bg,
-                  color: "#222",
-                  textAlign: "left",
-                  cursor: selected ? "default" : "pointer",
-                  transition: "background 0.3s",
-                }}
+                className={optionClass}
+                onClick={() => handleAnswer(option)}
               >
                 {option}
-              </button>
+              </Button>
             );
           })}
         </div>
 
         {selected && (
-          <div style={{ marginTop: "1.5rem" }}>
+          <div className="play-prompt">
             {explanation && (
-              <div
-                style={{
-                  background: "#eef4ff",
-                  borderLeft: "4px solid #007bff",
-                  padding: "1rem",
-                  borderRadius: "8px",
-                  color: "#333",
-                  marginBottom: "1rem",
-                }}
-              >
+              <p style={{ margin: 0 }}>
                 💡 <strong>Explanation:</strong> {explanation}
-              </div>
+              </p>
             )}
-            <button
-              onClick={next}
-              style={{
-                padding: "0.6rem 1.2rem",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              Next →
-            </button>
+            <div style={{ marginTop: "1rem" }}>
+              <Button variant="primary" onClick={next}>
+                Next →
+              </Button>
+            </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

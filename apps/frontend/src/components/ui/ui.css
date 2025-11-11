@@ -1,0 +1,82 @@
+.ui-button {
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.ui-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ui-button.primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 10px 30px rgba(11, 14, 23, 0.45);
+}
+
+.ui-button.secondary {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+}
+
+.ui-button.ghost {
+  background: transparent;
+  color: var(--foreground);
+}
+
+.ui-button.destructive {
+  background: var(--destructive);
+  color: var(--foreground);
+  border-color: transparent;
+}
+
+.ui-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.6);
+}
+
+.ui-badge {
+  padding: 0.35rem 0.8rem;
+  background: color-mix(in srgb, var(--foreground) 10%, var(--card));
+  color: var(--foreground);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 40%, transparent 60%);
+}
+
+.ui-input {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border-radius: calc(var(--radius) / 1.25);
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border 0.15s ease;
+}
+
+.ui-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+}

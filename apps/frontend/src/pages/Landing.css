@@ -1,0 +1,232 @@
+:root {
+  --soft-grid-border: rgba(255, 255, 255, 0.06);
+}
+
+.landing-page {
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--primary) 40%, transparent), transparent 40%),
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--accent) 25%, transparent), transparent 35%),
+    var(--background);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.landing-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.landing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-mark {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--foreground);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-links {
+  gap: 0.2rem;
+}
+
+.notice-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  color: var(--card-foreground);
+}
+
+.landing-main {
+  padding: 0;
+  display: grid;
+  gap: 2rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  align-items: center;
+}
+
+.hero-copy h1 {
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  margin: 0.2rem 0;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hero-copy p {
+  color: var(--muted-foreground);
+  margin-bottom: 1.2rem;
+}
+
+.hero-copy .eyebrow {
+  letter-spacing: 0.2em;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.hero-actions .ui-button {
+  min-width: 160px;
+}
+
+.mock-device {
+  justify-self: center;
+  min-width: 240px;
+}
+
+.device-shell {
+  width: 260px;
+  margin: 0 auto;
+  border-radius: 30px;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.7);
+}
+
+.device-shell .screen {
+  background: var(--popover);
+  border-radius: 24px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+}
+
+.device-screen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.8rem;
+}
+
+.device-screen-header span:first-child {
+  color: var(--secondary);
+}
+
+.device-question {
+  color: var(--card-foreground);
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+}
+
+.device-option {
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  margin-bottom: 0.5rem;
+  background: color-mix(in srgb, var(--foreground), transparent 80%);
+  border: 1px solid color-mix(in srgb, var(--foreground), transparent 70%);
+  color: var(--foreground);
+  font-size: 0.85rem;
+}
+
+.quiz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.quiz-card {
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  color: var(--card-foreground);
+}
+
+.quiz-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent);
+}
+
+.quiz-card .ui-badge {
+  align-self: flex-start;
+  border: 1px solid color-mix(in srgb, var(--foreground), transparent 80%);
+  background: color-mix(in srgb, var(--foreground), transparent 70%);
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.quiz-card h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--foreground);
+}
+
+.quiz-card p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+}
+
+.quiz-card .quiz-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.quiz-card .play-button {
+  padding: 0;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .landing-body {
+    padding-top: 1rem;
+  }
+
+  .landing-main {
+    padding: 1.5rem;
+  }
+
+  .landing-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-actions .ui-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .device-shell {
+    width: 220px;
+  }
+}
