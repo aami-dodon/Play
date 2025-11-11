@@ -165,8 +165,8 @@ export default function LeaderboardTable({
       )}
       <CardContent className={compact ? "px-4" : undefined}>
         {hasPlayers && showFilters && (categoryOptions.length > 0 || challengeOptions.length > 0) && (
-          <div className="flex flex-col gap-3 pb-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-3 pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full flex-wrap gap-2">
               {categoryOptions.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

@@ -86,7 +86,7 @@ export default function Header() {
 
   return (
     <Card className="sticky top-4 z-40 border-border/70 bg-card/95/90 px-5 py-4 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3">
             <img
@@ -105,7 +105,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-3">
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
           <DesktopNav pathname={pathname} />
           <ThemeToggle className="hidden md:inline-flex" />
           <Button asChild size="sm" className="hidden md:inline-flex rounded-full px-6">
