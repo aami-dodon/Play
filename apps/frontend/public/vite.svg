@@ -1,20 +1,61 @@
 <svg
   width="200"
   height="200"
+  viewBox="0 0 200 200"
   xmlns="http://www.w3.org/2000/svg"
   class="primary"
 >
-  <!-- Background uses the text color -->
-  <rect width="100" height="100" x="50" y="50" fill="currentColor" rx="8" />
+  <defs>
+    <linearGradient id="card-gradient" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--color-primary)" />
+      <stop offset="100%" stop-color="var(--color-secondary)" />
+    </linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="var(--color-primary-foreground)" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Outer glow circle -->
+  <circle
+    cx="100"
+    cy="100"
+    r="90"
+    fill="var(--color-card)"
+    stroke="var(--color-secondary)"
+    stroke-width="2"
+    opacity="0.65"
+  />
+
+  <!-- Gradient card -->
+  <rect
+    x="35"
+    y="35"
+    width="130"
+    height="130"
+    rx="28"
+    ry="28"
+    fill="url(#card-gradient)"
+    filter="url(#soft-shadow)"
+  />
+
+  <!-- Secondary accent arc -->
+  <path
+    d="M40 130 A60 60 0 0 1 160 70"
+    stroke="var(--color-secondary-foreground)"
+    stroke-width="6"
+    fill="none"
+    stroke-linecap="round"
+  />
 
   <!-- Letter P -->
   <text
     x="100"
-    y="115"
+    y="120"
     text-anchor="middle"
-    font-size="48"
-    fill="var(--color-primary-foreground)"
+    font-size="64"
+    font-weight="600"
     font-family="Space Grotesk, Inter, system-ui, sans-serif"
+    fill="var(--color-card-foreground)"
   >
     P
   </text>

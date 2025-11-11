@@ -36,12 +36,9 @@ export default function Play() {
     fetchQuestions(slug).then(setQuestions);
   }, [slug]);
 
-  const shellClasses =
-    "min-h-screen px-4 py-12 text-foreground [background:radial-gradient(circle_at_top,_color-mix(in_oklab,_var(--primary)_35%,_transparent),_transparent_45%),radial-gradient(circle_at_20%_20%,_color-mix(in_oklab,_var(--accent)_25%,_transparent),_transparent_35%),var(--background)]";
-
   if (questions.length === 0) {
     return (
-      <div className={shellClasses}>
+      <div className="mx-auto flex w-full max-w-2xl justify-center">
         <Card className="mx-auto w-full max-w-2xl border-border/70 bg-card/90 px-6 py-8 text-center shadow-[0_35px_120px_rgba(2,6,23,0.65)] backdrop-blur-xl">
           <p className="text-base font-medium text-muted-foreground">Loading questions...</p>
         </Card>
@@ -76,15 +73,17 @@ export default function Play() {
   const isLastQuestion = current + 1 === questions.length;
 
   return (
-    <div className={shellClasses}>
-      <Card className="mx-auto w-full max-w-2xl gap-6 border-border/70 bg-card/90 px-6 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.65)] backdrop-blur-xl">
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
-            Play
-          </p>
-          <p className="text-sm font-medium text-muted-foreground">
+    <>
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-6 rounded-3xl border border-border/70 bg-card/90 px-6 py-5 text-center text-sm font-semibold uppercase tracking-[0.35em] text-muted-foreground shadow-[0_25px_80px_rgba(2,6,23,0.35)]">
+          <p className="text-xs text-[var(--secondary-foreground)]">Play</p>
+          <p className="text-sm text-foreground">
             Question {current + 1} / {questions.length}
           </p>
+        </div>
+      </div>
+      <Card className="mx-auto w-full max-w-2xl gap-6 border-border/70 bg-card/90 px-6 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.65)] backdrop-blur-xl">
+        <header className="space-y-2">
           <div className="prose prose-base dark:prose-invert">
             <p className="mb-0 text-lg font-semibold text-foreground">
               {q.question_text}
@@ -138,6 +137,6 @@ export default function Play() {
           </div>
         )}
       </Card>
-    </div>
+    </>
   );
 }

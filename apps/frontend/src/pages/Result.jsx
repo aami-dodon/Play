@@ -39,11 +39,11 @@ export default function Result() {
 
         <dl className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-2 sm:text-base">
           <div className="rounded-2xl border border-border/70 bg-popover/80 p-4">
-            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">Score</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--secondary)]">Score</dt>
             <dd className="mt-2 text-3xl font-bold text-foreground">{score}</dd>
           </div>
           <div className="rounded-2xl border border-border/70 bg-popover/80 p-4">
-            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">
+            <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--secondary)]">
               Time (s)
             </dt>
             <dd className="mt-2 text-3xl font-bold text-foreground">{time}</dd>
