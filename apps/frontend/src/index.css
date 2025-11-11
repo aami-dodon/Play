@@ -165,3 +165,128 @@
     transform: translateX(calc((var(--radix-progress-value, 0) - 100) * 1%));
   }
 }
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero-card::after {
+  content: "";
+  position: absolute;
+  inset: -40% -20% -40% -20%;
+  background: radial-gradient(circle, color-mix(in_oklab, var(--primary) 60%, transparent) 0%, transparent 60%);
+  opacity: 0.45;
+  animation: hero-card-orbit 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-animate {
+  animation: hero-card-glow 12s ease-in-out infinite;
+}
+
+.hero-title-animate {
+  animation: hero-title-pop 1.2s ease-out;
+}
+
+.hero-eyebrow-animate {
+  animation: hero-eyebrow 1s ease-out;
+}
+
+.hero-description-animate {
+  animation: hero-description-fade 1.6s ease-out;
+}
+
+.hero-stats-animate {
+  animation: hero-stats-pulse 9s ease-in-out infinite alternate;
+}
+
+.hero-subtitle-animate {
+  animation: hero-subtitle-glide 1.5s ease-out;
+}
+
+@keyframes hero-card-orbit {
+  0% {
+    transform: scale(0.85) translateX(-10%);
+  }
+  50% {
+    transform: scale(1) translateX(8%);
+  }
+  100% {
+    transform: scale(0.9) translateX(-5%);
+  }
+}
+
+@keyframes hero-card-glow {
+  0% {
+    box-shadow: 0 0 25px color-mix(in_oklab, var(--primary) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 45px color-mix(in_oklab, var(--primary) 60%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 30px color-mix(in_oklab, var(--primary) 30%, transparent);
+  }
+}
+
+@keyframes hero-title-pop {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes hero-eyebrow {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes hero-description-fade {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes hero-stats-pulse {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-subtitle-glide {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

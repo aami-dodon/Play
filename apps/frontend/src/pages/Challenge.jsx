@@ -87,9 +87,15 @@ export default function Challenge() {
       title: quiz.title,
       description: quiz.description || "You know you want to tap in.",
       category: quiz.category || "Arcade",
-      difficulty: index % 3 === 0 ? "Chaotic" : index % 3 === 1 ? "Spicy" : "Chill",
-      players: placeholderPlayers[index % placeholderPlayers.length],
-      streak: placeholderStreaks[index % placeholderStreaks.length],
+      difficulty: quiz.difficulty || "Spicy",
+      players:
+        quiz.players_label ||
+        quiz.players ||
+        placeholderPlayers[index % placeholderPlayers.length],
+      streak:
+        quiz.streak_label ||
+        quiz.streak ||
+        placeholderStreaks[index % placeholderStreaks.length],
     }));
   }, [availableQuizzes]);
 

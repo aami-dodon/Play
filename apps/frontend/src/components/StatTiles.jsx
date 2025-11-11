@@ -1,8 +1,9 @@
 import { Card, CardContent } from "./ui/card";
+import { cn } from "@/lib/utils";
 
-export default function StatTiles({ stats = [], dense }) {
+export default function StatTiles({ stats = [], dense, className }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+    <div className={cn("grid gap-3 sm:grid-cols-2 md:grid-cols-3", className)}>
       {stats.map((stat) => (
         <Card key={stat.label} className="border-border/60 bg-popover/80">
           <CardContent className={dense ? "px-4 py-4" : undefined}>

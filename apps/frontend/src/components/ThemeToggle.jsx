@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { notifyThemeChange } from "@/lib/theme";
+import { Moon, Sun } from "lucide-react";
 
 const STORAGE_KEY = "play-theme";
 
@@ -43,14 +44,15 @@ export default function ThemeToggle({ className }) {
       type="button"
       size="sm"
       variant="ghost"
-      className={cn("gap-2 rounded-full px-3", className)}
+      className={cn("rounded-full px-3", className)}
       onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
       aria-label={label}
     >
-      <span aria-hidden="true">{theme === "dark" ? "☀️" : "🌙"}</span>
-      <span className="text-[0.65rem] font-semibold uppercase tracking-[0.35em]">
-        {theme === "dark" ? "Light" : "Dark"}
-      </span>
+      {theme === "dark" ? (
+        <Sun className="size-4" aria-hidden="true" />
+      ) : (
+        <Moon className="size-4" aria-hidden="true" />
+      )}
     </Button>
   );
 }

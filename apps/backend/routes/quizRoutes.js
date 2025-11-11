@@ -74,18 +74,29 @@ const { pool } = require("../db");
  *         schema:
  *           type: string
  *         description: Optional category name to filter quizzes.
+ *       - in: query
+ *         name: featured
+ *         schema:
+ *           type: boolean
+ *         description: Optional flag to filter featured quizzes.
  */
 
 // 🧠 GET all quizzes
 router.get("/", async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, featured } = req.query;
     const filters = [];
     const values = [];
 
     if (category) {
       values.push(category);
       filters.push(`LOWER(category) = LOWER($${values.length})`);
+    }
+
+    if (featured === "true" || featured === "false" || featured === "1" || featured === "0") {
+      const flag = featured === "true" || featured === "1";
+      values.push(flag);
+      filters.push(`featured = $${values.length}`);
     }
 
     let query = "SELECT * FROM quizzes";

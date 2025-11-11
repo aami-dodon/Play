@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatLeaderboardRows } from "@/lib/leaderboard";
 import { leaderboardPreviewPlayers, texts } from "@/texts";
 
@@ -61,12 +68,13 @@ export default function Home() {
   const [heroMode, setHeroMode] = useState("home");
   const location = useLocation();
   const notice = location.state?.notice;
+  const [dialogOpen, setDialogOpen] = useState(Boolean(notice));
 
   useEffect(() => {
     let mounted = true;
     async function loadHomeData() {
       const [featuredRes, leaderboardRes] = await Promise.allSettled([
-        fetchQuizzes(),
+        fetchQuizzes({ featured: true }),
         fetchGlobalLeaderboard(6),
       ]);
 
@@ -97,6 +105,10 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    setDialogOpen(Boolean(notice));
+  }, [notice, location.key]);
+
   const { items: challenges, usedFallback: featuredFallback } = useMemo(
     () => decorateChallenges(quizzes),
     [quizzes]
@@ -106,26 +118,42 @@ export default function Home() {
     return formatted.length ? formatted : leaderboardPreviewPlayers;
   }, [overallLeaderboard]);
 
+  const liveQueueItems = useMemo(() => {
+    const source = challenges.length
+      ? challenges
+      : texts.home.featured.placeholderChallenges;
+    const sample = [...source];
+    for (let i = sample.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [sample[i], sample[j]] = [sample[j], sample[i]];
+    }
+    return sample.slice(0, Math.min(3, sample.length));
+  }, [challenges]);
+
   return (
     <div className="space-y-8">
       {notice && (
-        <Card className="border-border/70 bg-secondary/20 backdrop-blur">
-          <CardContent className="flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary-foreground">
-              {notice}
-            </p>
-            <Button asChild size="sm" variant="ghost">
-              <Link to="/challenge">Play a new one</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-center text-base leading-relaxed">
+                {notice}
+              </DialogTitle>
+            </DialogHeader>
+            <DialogFooter className="flex flex-col gap-2">
+              <Button asChild className="w-full">
+                <Link to="/challenge">Play a new one</Link>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
-      <Card className="grid gap-8 border-border/70 bg-card/95 p-6 shadow-[0_25px_100px_rgba(2,6,23,0.55)] lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
+      <Card className="hero-card hero-animate grid gap-8 border-border/70 bg-card/95 p-6 shadow-[0_25px_100px_rgba(2,6,23,0.55)] lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.35em] text-muted-foreground">
             <Badge variant="secondary" className="rounded-full px-4 text-[0.6rem] tracking-[0.35em]">
-              Challenged
+              Live queue
             </Badge>
             <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/80 p-1">
               {heroToggleOptions.map((option) => (
@@ -146,13 +174,15 @@ export default function Home() {
             </div>
           </div>
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
+            <p className="hero-eyebrow-animate text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
               {texts.home.hero.eyebrow}
             </p>
-            <h1 className="text-4xl font-semibold leading-tight">
+            <h1 className="hero-title-animate text-4xl font-semibold leading-tight text-foreground">
               {texts.home.hero.title}
             </h1>
-            <p className="text-base text-muted-foreground">{texts.home.hero.description}</p>
+            <p className="hero-description-animate text-base text-muted-foreground">
+              {texts.home.hero.description}
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" className="rounded-full px-8">
@@ -162,7 +192,7 @@ export default function Home() {
               <Link to="/challenge">{texts.home.hero.secondaryCta}</Link>
             </Button>
           </div>
-          <StatTiles stats={texts.home.hero.stats} dense />
+          <StatTiles stats={texts.home.hero.stats} dense className="hero-stats-animate" />
         </div>
 
         <div className="space-y-4">
@@ -182,11 +212,16 @@ export default function Home() {
                 <Progress value={50} className="mt-3 h-3 bg-primary/20" />
               </div>
               <div className="space-y-3">
-                {["Guess That Emoji Movie!", "History, but make it dramatic."].map((item) => (
-                  <div key={item} className="flex items-center justify-between rounded-2xl border border-border/60 bg-popover/80 px-4 py-3">
+                {liveQueueItems.map((item) => (
+                  <div
+                    key={`${item.slug || item.title}-${item.players}`}
+                    className="flex items-center justify-between rounded-2xl border border-border/60 bg-popover/80 px-4 py-3"
+                  >
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{item}</p>
-                      <p className="text-xs text-muted-foreground">Lobby filled · 4 slots left</p>
+                      <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.category || "Arcade"} · {item.players || "Live seats open"}
+                      </p>
                     </div>
                     <Badge variant="secondary" className="rounded-full px-3">
                       Live
@@ -222,7 +257,7 @@ export default function Home() {
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
             {texts.home.featured.title}
           </p>
-          <h2 className="text-2xl font-semibold text-muted-foreground">
+          <h2 className="text-2xl font-semibold text-foreground hero-subtitle-animate">
             {texts.home.featured.subtitle}
           </h2>
         </div>
@@ -252,7 +287,7 @@ export default function Home() {
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
             {texts.home.leaderboardPreview.title}
           </p>
-          <p className="text-2xl font-semibold text-muted-foreground">
+          <p className="text-2xl font-semibold text-foreground hero-subtitle-animate">
             {texts.home.leaderboardPreview.subtitle}
           </p>
         </div>

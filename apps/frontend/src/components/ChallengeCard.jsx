@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Flame, Trophy } from "lucide-react";
+import { texts } from "@/texts";
 
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -30,6 +32,14 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
   } = challenge;
 
   const difficultyClass = difficultyColors[difficulty] || difficultyColors.Spicy;
+  const promptText = useMemo(() => {
+    const prompts = texts.challenge.prompts || [];
+    if (!prompts.length) {
+      return texts.challenge.prompt;
+    }
+    const index = Math.floor(Math.random() * prompts.length);
+    return prompts[index];
+  }, []);
 
   return (
     <Card className="border-border/70 bg-card/95 transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-xl">
@@ -65,7 +75,7 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
       )}
       <CardFooter className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          Next Victim — I mean, Challenge.
+          {promptText}
         </p>
         <Button asChild size="sm" className="rounded-full px-4">
           <Link to={slug ? `/challenge/${slug}` : "/challenge"}>{ctaLabel}</Link>
