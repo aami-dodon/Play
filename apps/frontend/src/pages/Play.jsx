@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import clsx from "clsx";
+
 import { fetchQuestions } from "../api.js";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import "./Play.css";
+import { cn } from "../lib/utils";
 
 export default function Play() {
   const { slug } = useParams();
@@ -36,14 +36,18 @@ export default function Play() {
     fetchQuestions(slug).then(setQuestions);
   }, [slug]);
 
-  if (questions.length === 0)
+  const shellClasses =
+    "min-h-screen px-4 py-12 text-foreground [background:radial-gradient(circle_at_top,_color-mix(in_oklab,_var(--primary)_35%,_transparent),_transparent_45%),radial-gradient(circle_at_20%_20%,_color-mix(in_oklab,_var(--accent)_25%,_transparent),_transparent_35%),var(--background)]";
+
+  if (questions.length === 0) {
     return (
-      <div className="play-page">
-        <Card className="play-card">
-          <p className="play-question">Loading questions...</p>
+      <div className={shellClasses}>
+        <Card className="mx-auto w-full max-w-2xl border-border/70 bg-card/90 px-6 py-8 text-center shadow-[0_35px_120px_rgba(2,6,23,0.65)] backdrop-blur-xl">
+          <p className="text-base font-medium text-muted-foreground">Loading questions...</p>
         </Card>
       </div>
     );
+  }
 
   const q = questions[current];
   const correctAnswer =
@@ -69,32 +73,45 @@ export default function Play() {
     }
   };
 
-  return (
-    <div className="play-page">
-      <Card className="play-card">
-        <p className="play-question">
-          Question {current + 1} / {questions.length}
-        </p>
-        <p style={{ fontSize: "1rem", color: "var(--muted-foreground)", lineHeight: 1.5 }}>
-          {q.question_text}
-        </p>
+  const isLastQuestion = current + 1 === questions.length;
 
-        <div className="play-options">
+  return (
+    <div className={shellClasses}>
+      <Card className="mx-auto w-full max-w-2xl gap-6 border-border/70 bg-card/90 px-6 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.65)] backdrop-blur-xl">
+        <header className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-secondary">
+            Play
+          </p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Question {current + 1} / {questions.length}
+          </p>
+          <div className="prose prose-base dark:prose-invert">
+            <p className="mb-0 text-lg font-semibold text-foreground">
+              {q.question_text}
+            </p>
+          </div>
+        </header>
+
+        <div className="flex flex-col gap-3">
           {q.options.map((option, i) => {
             const isCorrect = option === correctAnswer;
             const isSelected = selected === option;
 
-            const optionClass = clsx("play-option", {
-              correct: selected && isCorrect,
-              incorrect: selected && isSelected && !isCorrect,
-            });
-
             return (
               <Button
                 key={i}
+                type="button"
                 variant="ghost"
                 disabled={!!selected}
-                className={optionClass}
+                className={cn(
+                  "w-full justify-start rounded-2xl border border-border/70 bg-popover/80 px-4 py-3 text-left text-base font-semibold text-foreground transition-all hover:border-primary/50 hover:bg-accent/30 disabled:opacity-60",
+                  {
+                    "border-chart-1 bg-chart-1 text-card-foreground shadow-lg shadow-chart-1/30":
+                      selected && isCorrect,
+                    "border-destructive bg-destructive/90 text-primary-foreground shadow-lg shadow-destructive/30":
+                      selected && isSelected && !isCorrect,
+                  }
+                )}
                 onClick={() => handleAnswer(option)}
               >
                 {option}
@@ -104,17 +121,20 @@ export default function Play() {
         </div>
 
         {selected && (
-          <div className="play-prompt">
+          <div className="rounded-2xl border border-border/70 bg-popover/80 p-4 text-sm text-muted-foreground shadow-inner">
             {explanation && (
-              <p style={{ margin: 0 }}>
-                💡 <strong>Explanation:</strong> {explanation}
-              </p>
+              <div className="prose prose-sm dark:prose-invert">
+                <p className="mb-0">
+                  <span role="img" aria-hidden="true">
+                    💡
+                  </span>{" "}
+                  <strong className="text-foreground">Explanation:</strong> {explanation}
+                </p>
+              </div>
             )}
-            <div style={{ marginTop: "1rem" }}>
-              <Button variant="primary" onClick={next}>
-                Next →
-              </Button>
-            </div>
+            <Button className="mt-4 w-full sm:w-auto" onClick={next}>
+              {isLastQuestion ? "See results" : "Next question"}
+            </Button>
           </div>
         )}
       </Card>

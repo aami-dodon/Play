@@ -1,35 +1,18 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Card } from "./components/ui/card";
+import { Button } from "./components/ui/button";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
+    <Card className="prose prose-sm mx-auto mt-10 w-full max-w-xl items-center justify-center text-center text-muted-foreground dark:prose-invert">
+      <p>
+        Routes are registered in <code>src/main.jsx</code>. This placeholder lives outside the router and
+        can be removed when you no longer need it.
       </p>
-    </>
-  )
+      <Button className="mx-auto mt-4 w-fit" type="button">
+        Back to quizzes
+      </Button>
+    </Card>
+  );
 }
 
-export default App
+export default App;
