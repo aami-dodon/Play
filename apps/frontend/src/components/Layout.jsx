@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import Header from "./Header.jsx";
-import { ScrollArea } from "./ui/scroll-area";
 import { Toaster } from "./ui/sonner";
 
 const backgroundClasses =
@@ -20,11 +19,9 @@ export default function Layout() {
     };
   }, [location.pathname]);
 
-  const scrollAreaClasses = `${backgroundClasses} h-screen w-full`;
-
   return (
     <>
-      <ScrollArea className={scrollAreaClasses}>
+      <div className={`${backgroundClasses} h-screen w-full`}>
         <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 pb-10 pt-6 sm:px-6 lg:px-8">
           <Header />
           <main className="flex-1 py-4">
@@ -37,7 +34,7 @@ export default function Layout() {
             </div>
           </main>
         </div>
-      </ScrollArea>
+      </div>
       <Toaster position="top-center" richColors duration={2200} />
     </>
   );
