@@ -3,7 +3,7 @@
 Play is a monorepo that powers the Play Dodon quiz experience, pairing a Vite/React frontend with an Express/Prisma backend that is backed by PostgreSQL and curated quiz data.
 
 ## Screenshot
-![Screenshot](images/home-page.jpg)
+![Screenshot](images/home-page.png)
 
 
 ## Table of contents
