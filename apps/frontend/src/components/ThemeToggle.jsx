@@ -6,10 +6,11 @@ import { notifyThemeChange } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
 
 const STORAGE_KEY = "play-theme";
+const DEFAULT_THEME = "dark";
 
 function getInitialTheme() {
   if (typeof window === "undefined") {
-    return "light";
+    return DEFAULT_THEME;
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -17,7 +18,7 @@ function getInitialTheme() {
     return stored;
   }
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return DEFAULT_THEME;
 }
 
 export default function ThemeToggle({ className }) {

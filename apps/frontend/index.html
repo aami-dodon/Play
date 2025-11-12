@@ -24,6 +24,29 @@
       content="Play sets the leaderboard on fire with witty challenges, bold taunts, and neon progress."
     />
     <meta name="twitter:image" content="/opengraph.jpg" />
+    <script>
+      (() => {
+        const STORAGE_KEY = "play-theme";
+        const DEFAULT_THEME = "dark";
+        const root = document.documentElement;
+        const applyTheme = (theme) => {
+          root.classList.toggle("dark", theme === "dark");
+          root.style.setProperty("color-scheme", theme);
+        };
+
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          if (stored === "dark" || stored === "light") {
+            applyTheme(stored);
+            return;
+          }
+        } catch (error) {
+          // localStorage might be disabled; fall back to hard default
+        }
+
+        applyTheme(DEFAULT_THEME);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
