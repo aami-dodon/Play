@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { readQuizProgress, readQuizQuestions, saveQuizProgress, saveQuizQuestions, clearQuizProgress } from "@/lib/quizProgress";
 import { texts } from "@/texts";
 import CategoryFilter from "@/components/CategoryFilter";
 
@@ -256,11 +257,53 @@ export default function Challenge() {
     if (!slug) return;
 
     let cancelled = false;
+    const savedQuestions = readQuizQuestions(slug);
+    const savedProgress = readQuizProgress(slug);
+
+    if (savedQuestions.length) {
+      if (!cancelled) {
+        const normalizedCurrent = Number.isFinite(savedProgress?.current)
+          ? Math.max(0, Math.min(savedQuestions.length - 1, savedProgress.current))
+          : 0;
+        const normalizedScore = Number.isFinite(savedProgress?.score)
+          ? Math.max(0, savedProgress.score)
+          : 0;
+        const restoredTimeLeft =
+          Number.isFinite(savedProgress?.timeLeft) && savedProgress.timeLeft >= 0
+            ? savedProgress.timeLeft
+            : QUESTION_TIME;
+        const restoredRevealed = savedProgress?.revealed ?? false;
+        const restoredSelected =
+          restoredRevealed && typeof savedProgress?.selected === "string" ? savedProgress.selected : null;
+
+        setQuestions(savedQuestions);
+        setCurrent(normalizedCurrent);
+        setScore(normalizedScore);
+        setRevealed(restoredRevealed);
+        setSelected(restoredSelected);
+        setTimeLeft(restoredTimeLeft);
+        setStartTime(savedProgress?.startTime ?? Date.now());
+      }
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const now = Date.now();
+    setCurrent(0);
+    setScore(0);
+    setSelected(null);
+    setRevealed(false);
+    setTimeLeft(QUESTION_TIME);
+    setStartTime(now);
 
     fetchQuestions(slug)
       .then((data) => {
         if (!cancelled) {
-          setQuestions(buildQuestionSet(data));
+          const built = buildQuestionSet(data);
+          setQuestions(built);
+          saveQuizQuestions(slug, built);
         }
       })
       .catch(() => {
@@ -272,17 +315,6 @@ export default function Challenge() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
-
-  useEffect(() => {
-    if (!slug) return;
-
-    setCurrent(0);
-    setScore(0);
-    setSelected(null);
-    setRevealed(false);
-    setTimeLeft(QUESTION_TIME);
-    setStartTime(Date.now());
   }, [slug]);
 
   useEffect(() => {
@@ -356,10 +388,6 @@ export default function Challenge() {
     };
   }, [slug]);
 
-  useEffect(() => {
-    setTimeLeft(QUESTION_TIME);
-  }, [current, totalQuestions]);
-
   const handleTimeout = useCallback(() => {
     if (revealed || !totalQuestions) return;
     setRevealed(true);
@@ -383,6 +411,18 @@ export default function Challenge() {
 
     return () => window.clearInterval(timer);
   }, [question, revealed, handleTimeout]);
+
+  useEffect(() => {
+    if (!slug || !questions.length) return;
+    saveQuizProgress(slug, {
+      current,
+      score,
+      timeLeft,
+      startTime,
+      selected,
+      revealed,
+    });
+  }, [slug, questions.length, current, score, timeLeft, startTime, selected, revealed]);
 
   const correctAnswer = useMemo(() => {
     if (!question) return "";
@@ -431,6 +471,7 @@ export default function Challenge() {
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     const slugSegment = slug || "demo";
     if (slug) {
+      clearQuizProgress(slug);
       markChallengePlayed(slug);
     }
     navigate(`/results/${slugSegment}?score=${score}&time=${timeTaken}&total=${totalQuestions}`);
