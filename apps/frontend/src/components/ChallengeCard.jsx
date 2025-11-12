@@ -27,8 +27,8 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
     description,
     category = "General",
     difficulty = "Spicy",
-    players = "1.2k",
-    streak = "12",
+    players,
+    streak,
   } = challenge;
 
   const difficultyClass = difficultyColors[difficulty] || difficultyColors.Spicy;
@@ -61,14 +61,14 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
             <Trophy className="size-4 text-primary" />
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Players</p>
-              <p className="text-base font-semibold text-foreground">{players}</p>
+              <p className="text-base font-semibold text-foreground">{players ?? "—"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-popover/80 px-3 py-2">
             <Flame className="size-4 text-orange-400" />
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Streak</p>
-              <p className="text-base font-semibold text-foreground">{streak}</p>
+              <p className="text-base font-semibold text-foreground">{streak ?? "—"}</p>
             </div>
           </div>
         </CardContent>

@@ -12,20 +12,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatLeaderboardRows } from "@/lib/leaderboard";
-import { leaderboardPreviewPlayers, texts } from "@/texts";
+import { texts } from "@/texts";
 
 import HomeHero from "@/components/home/HomeHero";
 import HomeLiveQueue from "@/components/home/HomeLiveQueue";
 import HomeFeatured from "@/components/home/HomeFeatured";
 import HomeLeaderboardPreview from "@/components/home/HomeLeaderboardPreview";
 
-const fallbackPlayers = ["2.1k online", "987 online", "1.4k online", "612 online"];
-const fallbackStreaks = ["13 wins", "8 wins", "22 wins", "5 wins"];
-
 function decorateChallenges(quizzes) {
   if (!quizzes?.length) {
     return {
-      items: texts.home.featured.placeholderChallenges,
+      items: [],
       usedFallback: true,
     };
   }
@@ -37,12 +34,8 @@ function decorateChallenges(quizzes) {
       description: quiz.description || "You know you want to tap in.",
       category: quiz.category || "General",
       difficulty: quiz.difficulty || quiz.level || (index % 2 === 0 ? "Spicy" : "Chaotic"),
-      players:
-        quiz.players_label ||
-        quiz.players ||
-        fallbackPlayers[index % fallbackPlayers.length],
-      streak:
-        quiz.streak_label || quiz.streak || fallbackStreaks[index % fallbackStreaks.length],
+      players: quiz.players_label || quiz.players,
+      streak: quiz.streak_label || quiz.streak,
     })),
     usedFallback: false,
   };
@@ -118,15 +111,13 @@ export default function Home() {
     () => decorateChallenges(quizzes),
     [quizzes]
   );
-  const leaderboardRows = useMemo(() => {
-    const formatted = formatLeaderboardRows(overallLeaderboard, { fallbackCategory: "Arcade" });
-    return formatted.length ? formatted : leaderboardPreviewPlayers;
-  }, [overallLeaderboard]);
+  const leaderboardRows = useMemo(
+    () => formatLeaderboardRows(overallLeaderboard),
+    [overallLeaderboard]
+  );
 
   const liveQueueItems = useMemo(() => {
-    const source = challenges.length
-      ? challenges
-      : texts.home.featured.placeholderChallenges;
+    const source = challenges;
     const sample = [...source];
     for (let i = sample.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));

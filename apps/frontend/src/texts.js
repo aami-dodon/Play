@@ -32,29 +32,6 @@ export const texts = {
     featured: {
       title: "Featured challenges",
       subtitle: "Fresh drops with more attitude than your group chat.",
-      placeholderChallenges: [
-        {
-          slug: "wifi-router-genius",
-          title: "Are You Smarter Than Your Wi-Fi Router?",
-          description: "Diagnose chaotic gadgets before the rage-quit hits.",
-          category: "Tech",
-          difficulty: "Chaotic",
-        },
-        {
-          slug: "emoji-cinema",
-          title: "Guess That Emoji Movie!",
-          description: "Decode the cinematic hieroglyphics.",
-          category: "Pop Culture",
-          difficulty: "Chaotic",
-        },
-        {
-          slug: "dramatic-history",
-          title: "History, but make it dramatic.",
-          description: "All the wars, none of the dust.",
-          category: "History",
-          difficulty: "Spicy",
-        },
-      ],
     },
     leaderboardPreview: {
       title: "Hall of Fame (and occasional shame).",
@@ -205,69 +182,8 @@ export const texts = {
     subtitle: "Flex responsibly. Or don't.",
     filters: ["All Time", "This Week", "Today"],
     fallbackCaption: "Leaderboard is taking a dramatic refresh—enjoy this standby flex.",
-    mockPlayers: [
-      {
-        player: "PixelBandit",
-        score: 9800,
-        category: "Emoji Cinema",
-        time: "36s",
-        challengeName: "Emoji Cinema Mayhem",
-      },
-      {
-        player: "LagWizard",
-        score: 9475,
-        category: "Wi-Fi Whisperer",
-        time: "41s",
-        challengeName: "Latency Legends",
-      },
-      {
-        player: "TriviaGoblin",
-        score: 9100,
-        category: "Historic Drama",
-        time: "55s",
-        challengeName: "Historic Drama Duel",
-      },
-      {
-        player: "404NotFound",
-        score: 8800,
-        category: "Emoji Cinema",
-        time: "60s",
-        challengeName: "Emoji Cinema Mayhem",
-      },
-      {
-        player: "ObviousPlant",
-        score: 8600,
-        category: "Wi-Fi Whisperer",
-        time: "64s",
-        challengeName: "Latency Legends",
-      },
-    ],
   },
 };
-
-export const leaderboardPreviewPlayers = [
-  {
-    player: "PixelBandit",
-    score: 9800,
-    category: "Emoji Cinema",
-    time: "36s",
-    challengeName: "Emoji Cinema Mayhem",
-  },
-  {
-    player: "LagWizard",
-    score: 9475,
-    category: "Wi-Fi Whisperer",
-    time: "41s",
-    challengeName: "Latency Legends",
-  },
-  {
-    player: "TriviaGoblin",
-    score: 9100,
-    category: "Historic Drama",
-    time: "55s",
-    challengeName: "Historic Drama Duel",
-  },
-];
 
 export const resultShareText = (score) =>
   `I survived Play with ${score} points. Barely.`;

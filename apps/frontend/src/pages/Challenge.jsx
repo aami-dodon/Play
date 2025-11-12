@@ -20,25 +20,6 @@ import { texts } from "@/texts";
 import CategoryFilter from "@/components/CategoryFilter";
 
 const QUESTION_TIME = 30;
-const fallbackQuestions = [
-  {
-    question_text: "Which emoji combo screams 'The Matrix' the loudest?",
-    options: ["🧑‍💻💊💚", "🕶️🐇📞", "🧥🛵☔", "🧠💤📺"],
-    correct_option: "🕶️🐇📞",
-    explanation: "Follow the white rabbit, obviously.",
-    category: "Emoji Cinema",
-  },
-  {
-    question_text: "Your Wi-Fi dies mid-boss fight. What's the chaos-first fix?",
-    options: ["Reboot the router", "Threaten it", "Switch to hotspot", "Cry"],
-    correct_option: "Threaten it",
-    explanation: "Electronics respond to dominance. Science.",
-    category: "Tech Drama",
-  },
-];
-
-const placeholderPlayers = ["2.1k online", "987 online", "1.4k online", "612 online"];
-const placeholderStreaks = ["13 wins", "8 wins", "22 wins", "5 wins"];
 const SKELETON_CARD_COUNT = 4;
 
 function shuffleArray(items) {
@@ -52,7 +33,7 @@ function shuffleArray(items) {
 }
 
 function buildQuestionSet(data) {
-  const source = Array.isArray(data) && data.length ? data : fallbackQuestions;
+  const source = Array.isArray(data) ? data : [];
   return shuffleArray(source);
 }
 
@@ -148,21 +129,15 @@ export default function Challenge() {
   const question = questions[current];
   const totalQuestions = questions.length;
   const availableChallengeCards = useMemo(() => {
-  if (!availableQuizzes.length) return [];
-  return availableQuizzes.map((quiz, index) => ({
+    if (!availableQuizzes.length) return [];
+    return availableQuizzes.map((quiz) => ({
       slug: quiz.slug,
       title: quiz.title,
       description: quiz.description || "You know you want to tap in.",
       category: quiz.category || "Arcade",
       difficulty: quiz.difficulty || "Spicy",
-      players:
-        quiz.players_label ||
-        quiz.players ||
-        placeholderPlayers[index % placeholderPlayers.length],
-      streak:
-        quiz.streak_label ||
-        quiz.streak ||
-        placeholderStreaks[index % placeholderStreaks.length],
+      players: quiz.players_label || quiz.players,
+      streak: quiz.streak_label || quiz.streak,
     }));
   }, [availableQuizzes]);
 

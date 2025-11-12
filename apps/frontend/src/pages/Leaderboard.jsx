@@ -194,9 +194,7 @@ export default function Leaderboard() {
   }, [leaderboardsByFilter]);
 
   const allTimeFilter = LEADERBOARD_FILTERS[0];
-  const baseRows = entriesByFilter[allTimeFilter]?.length
-    ? entriesByFilter[allTimeFilter]
-    : texts.leaderboard.mockPlayers;
+  const baseRows = entriesByFilter[allTimeFilter] ?? [];
   const highlightPlayerName = localPlayerName || HIGHLIGHT_PLAYER_NAME;
 
   const leaderboardSummary = useMemo(() => {
