@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const ExcelJS = require("exceljs");
-require("dotenv").config({ path: path.join(__dirname, "..", ".env"), override: false });
+require("../loadRootEnv");
 const { PrismaClient } = require("@prisma/client");
 const { importQuizzesFromWorkbook } = require("../lib/quizExcel");
 

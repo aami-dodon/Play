@@ -8,7 +8,6 @@ services:
       - "${BACKEND_PORT:-6008}:${BACKEND_PORT:-6008}"
     env_file:
       - ./.env
-      - ./apps/backend/.env
     environment:
       PORT: "${BACKEND_PORT:-6008}"
     command: sh -c "npm run migrate:deploy && npm run dev"

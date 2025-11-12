@@ -25,14 +25,14 @@ This folder now contains everything needed for admins to define a quiz in Excel 
    ```
    Add `--force` if you need to overwrite an existing quiz with the same slug (the script will replace every question for that slug).
 
-> The importer loads `apps/backend/.env`, so ensure `DATABASE_URL` points at the database you want to modify before running it.
+> The importer loads the repo root `.env`, so ensure `DATABASE_URL` points at the database you want to modify before running it.
 
 # Admin dashboard
 
-A password-protected page is now available at `/admin` on the frontend. The dashboard relies on `ADMIN_PASSWORD` from the same `.env` file and uses these backend endpoints:
+A password-protected page is now available at `/admin` on the frontend. The dashboard relies on `ADMIN_PASSWORD` from the repo root `.env` file and uses these backend endpoints:
 
 - `POST /api/admin/verify` – checks the provided password before unlocking the UI.
 - `GET /api/admin/quiz-template` – streams an Excel template that is guaranteed to match the importer’s expectations.
 - `POST /api/admin/quizzes/upload` – accepts a `.xlsx` file and a `force` flag to insert/update the quizzes, mirroring what `importQuizFromExcel.js` does.
 
-Set `ADMIN_PASSWORD` to the same value both in `.env` and when logging into `/admin`, and do not expose that value in public repositories.
+Set `ADMIN_PASSWORD` to the same value both in the repo root `.env` and when logging into `/admin`, and do not expose that value in public repositories.
