@@ -38,7 +38,7 @@ export default function Layout() {
           </main>
         </div>
       </ScrollArea>
-      <Toaster position="top-center" richColors closeButton duration={2200} />
+      <Toaster position="top-center" richColors duration={2200} />
     </>
   );
 }

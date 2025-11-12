@@ -130,7 +130,7 @@
 .toaster[data-sonner-toaster] {
   --normal-bg: var(--popover);
   --normal-text: var(--popover-foreground);
-  --normal-border: var(--border);
+  --normal-border: transparent;
   --success-bg: var(--popover);
   --success-text: var(--popover-foreground);
   --error-bg: var(--popover);
@@ -140,6 +140,10 @@
   --info-bg: var(--popover);
   --info-text: var(--popover-foreground);
   --border-radius: var(--radius);
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled='true'] {
+  border: none;
 }
 
 /* ===========================

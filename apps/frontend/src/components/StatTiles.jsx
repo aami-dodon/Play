@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 
 export default function StatTiles({ stats = [], dense, className }) {
   return (
-    <div className={cn("grid gap-3 sm:grid-cols-2 md:grid-cols-3", className)}>
+    <div className={cn("w-full max-w-full grid gap-3 sm:grid-cols-2 md:grid-cols-3", className)}>
       {stats.map((stat) => (
-        <Card key={stat.label} className="border-border/70 bg-card/95">
+        <Card key={stat.label} className="w-full max-w-full border-border/70 bg-card/95">
           <CardContent className={dense ? "px-4 py-4" : undefined}>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               {stat.label}

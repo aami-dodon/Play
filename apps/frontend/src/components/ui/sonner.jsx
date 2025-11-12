@@ -10,7 +10,7 @@ import { Toaster as Sonner } from "sonner";
 
 import { getDocumentTheme, THEME_EVENT } from "@/lib/theme";
 
-const Toaster = ({ ...props }) => {
+const Toaster = ({ closeButton = false, ...props }) => {
   const [theme, setTheme] = useState(() => getDocumentTheme());
 
   useEffect(() => {
@@ -28,6 +28,7 @@ const Toaster = ({ ...props }) => {
     <Sonner
       theme={theme}
       className="toaster group"
+      closeButton={closeButton}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

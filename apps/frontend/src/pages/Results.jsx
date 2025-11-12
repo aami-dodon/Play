@@ -15,6 +15,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { texts, resultShareText } from "@/texts";
 import { hasPlayedChallenge, saveLocalPlayerName } from "@/lib/playedChallenges";
 
@@ -33,6 +42,7 @@ export default function Results() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
+  const [aliasDialogOpen, setAliasDialogOpen] = useState(true);
   const friendlyChallengeName = useMemo(() => {
     if (!slug) return "Arcade Challenge";
     return slug
@@ -82,6 +92,7 @@ export default function Results() {
       const data = await fetchLeaderboard(slug);
       setLeaderboard(data);
       setSubmitted(true);
+      setAliasDialogOpen(false);
       saveLocalPlayerName(username);
       toast.success(texts.toasts.achievement);
     } catch (error) {
@@ -154,17 +165,33 @@ export default function Results() {
               <p className="text-sm font-semibold text-foreground">
                 Drop your name to cement the brag.
               </p>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Input
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="Alias for the legend board"
-                  className="sm:flex-1"
-                />
-                <Button size="lg" disabled={!username || submitting} onClick={handleSubmit}>
-                  {submitting ? "Uploading ego..." : "Post score"}
-                </Button>
-              </div>
+              <Dialog open={aliasDialogOpen} onOpenChange={setAliasDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="w-full rounded-full px-8" type="button">
+                    Alias for the legend board
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Drop your name to cement the brag.</DialogTitle>
+                    <DialogDescription>
+                      Alias for the legend board and a chance to Post score with swagger.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <Input
+                      value={username}
+                      onChange={(event) => setUsername(event.target.value)}
+                      placeholder="Alias for the legend board"
+                    />
+                  </div>
+                  <DialogFooter className="gap-3">
+                    <Button size="lg" disabled={!username || submitting} onClick={handleSubmit}>
+                      {submitting ? "Uploading ego..." : "Post score"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           ) : (
             <LeaderboardTable

@@ -218,46 +218,50 @@ export default function LeaderboardTable({
         ) : !hasFilteredPlayers ? (
           <p className="text-sm text-muted-foreground">Nothing matches those filters.</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Challenge</TableHead>
-                <TableHead>Time</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPlayers.map((entry, index) => (
-                <TableRow
-                  key={`${entry.player}-${index}`}
-                  data-state={
-                    highlightPlayer && entry.player === highlightPlayer ? "selected" : undefined
-                  }
-                >
-                  <TableCell className="font-semibold text-muted-foreground">
-                    {entry.sortRank ?? entry.rank ?? index + 1}
-                  </TableCell>
-                  <TableCell className="font-semibold text-foreground">{entry.player}</TableCell>
-                  <TableCell className="text-primary font-semibold">
-                    {entry.displayScore ?? entry.score ?? 0}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="rounded-full px-3 text-xs">
-                      {entry.category || FALLBACK_CATEGORY_LABEL}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {entry.challengeName || FALLBACK_CHALLENGE_LABEL}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{entry.time}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            {caption && <TableCaption>{caption}</TableCaption>}
-          </Table>
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[720px]">
+              <Table className="w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Player</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Challenge</TableHead>
+                    <TableHead>Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPlayers.map((entry, index) => (
+                    <TableRow
+                      key={`${entry.player}-${index}`}
+                      data-state={
+                        highlightPlayer && entry.player === highlightPlayer ? "selected" : undefined
+                      }
+                    >
+                      <TableCell className="font-semibold text-muted-foreground">
+                        {entry.sortRank ?? entry.rank ?? index + 1}
+                      </TableCell>
+                      <TableCell className="font-semibold text-foreground">{entry.player}</TableCell>
+                      <TableCell className="text-primary font-semibold">
+                        {entry.displayScore ?? entry.score ?? 0}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="rounded-full px-3 text-xs">
+                          {entry.category || FALLBACK_CATEGORY_LABEL}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {entry.challengeName || FALLBACK_CHALLENGE_LABEL}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{entry.time}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                {caption && <TableCaption>{caption}</TableCaption>}
+              </Table>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
