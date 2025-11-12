@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: "${FRONTEND_PORT:-6009}"
-      VITE_API_URL: "http://localhost:${BACKEND_PORT:-6008}/api"
+      VITE_API_URL: "${VITE_API_URL:-http://localhost:${BACKEND_PORT:-6008}/api}"
       VITE_ALLOWED_HOSTS: "${VITE_ALLOWED_HOSTS:-play.dodon.in,localhost,192.168.1.3}"
     ports:
       - "${FRONTEND_PORT:-6009}:${FRONTEND_PORT:-6009}"
