@@ -156,14 +156,14 @@ export default function LeaderboardTable({
   };
 
   return (
-    <Card className="border-border/70 bg-card/95">
+    <Card className="w-full max-w-full border-border/70 bg-card/95">
       {(title || subtitle) && (
         <CardHeader>
           {title && <CardTitle className="text-lg font-semibold">{title}</CardTitle>}
           {subtitle && <CardDescription>{subtitle}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent className={compact ? "px-4" : undefined}>
+      <CardContent className={compact ? "w-full px-4" : "w-full"}>
         {hasPlayers && showFilters && (categoryOptions.length > 0 || challengeOptions.length > 0) && (
         <div className="flex w-full flex-col gap-3 pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex w-full flex-wrap gap-2">
@@ -218,50 +218,46 @@ export default function LeaderboardTable({
         ) : !hasFilteredPlayers ? (
           <p className="text-sm text-muted-foreground">Nothing matches those filters.</p>
         ) : (
-          <div className="w-full overflow-x-auto">
-            <div className="min-w-[720px]">
-              <Table className="w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>Player</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Challenge</TableHead>
-                    <TableHead>Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPlayers.map((entry, index) => (
-                    <TableRow
-                      key={`${entry.player}-${index}`}
-                      data-state={
-                        highlightPlayer && entry.player === highlightPlayer ? "selected" : undefined
-                      }
-                    >
-                      <TableCell className="font-semibold text-muted-foreground">
-                        {entry.sortRank ?? entry.rank ?? index + 1}
-                      </TableCell>
-                      <TableCell className="font-semibold text-foreground">{entry.player}</TableCell>
-                      <TableCell className="text-primary font-semibold">
-                        {entry.displayScore ?? entry.score ?? 0}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="rounded-full px-3 text-xs">
-                          {entry.category || FALLBACK_CATEGORY_LABEL}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {entry.challengeName || FALLBACK_CHALLENGE_LABEL}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{entry.time}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                {caption && <TableCaption>{caption}</TableCaption>}
-              </Table>
-            </div>
-          </div>
+          <Table className="min-w-[720px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">#</TableHead>
+                <TableHead>Player</TableHead>
+                <TableHead>Score</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Challenge</TableHead>
+                <TableHead>Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPlayers.map((entry, index) => (
+                <TableRow
+                  key={`${entry.player}-${index}`}
+                  data-state={
+                    highlightPlayer && entry.player === highlightPlayer ? "selected" : undefined
+                  }
+                >
+                  <TableCell className="font-semibold text-muted-foreground">
+                    {entry.sortRank ?? entry.rank ?? index + 1}
+                  </TableCell>
+                  <TableCell className="font-semibold text-foreground">{entry.player}</TableCell>
+                  <TableCell className="text-primary font-semibold">
+                    {entry.displayScore ?? entry.score ?? 0}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="rounded-full px-3 text-xs">
+                      {entry.category || FALLBACK_CATEGORY_LABEL}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {entry.challengeName || FALLBACK_CHALLENGE_LABEL}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{entry.time}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            {caption && <TableCaption>{caption}</TableCaption>}
+          </Table>
         )}
       </CardContent>
     </Card>

@@ -69,9 +69,9 @@ export default function Home() {
   const notice = location.state?.notice;
   const [dialogOpen, setDialogOpen] = useState(Boolean(notice));
   const sections = {
-    hero: false,
-    liveQueue: false,
-    featured: false,
+    hero: true,
+    liveQueue: true,
+    featured: true,
     leaderboard: true,
   };
 
@@ -155,14 +155,9 @@ export default function Home() {
       )}
 
       {sections.hero && (
-        <Card className="w-full max-w-full grid gap-8 border-border/70 bg-card/95 p-6 lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
+        <Card className="w-full max-w-full grid gap-8 border-border/70 bg-card/95 p-6 lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-start">
           <HomeHero />
-        </Card>
-      )}
-
-      {sections.liveQueue && (
-        <Card className="w-full max-w-full grid gap-8 border-border/70 bg-card/95 p-6 lg:grid-cols-[1.2fr_minmax(0,0.9fr)] lg:items-center">
-          <HomeLiveQueue liveQueueItems={liveQueueItems} />
+          {sections.liveQueue && <HomeLiveQueue liveQueueItems={liveQueueItems} />}
         </Card>
       )}
 
