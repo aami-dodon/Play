@@ -76,6 +76,18 @@ export default function Results() {
     challengeName: friendlyChallengeName,
   }));
 
+  const shareCopyText = useMemo(
+    () =>
+      resultShareText({
+        score,
+        total,
+        accuracy,
+        time,
+        challengeName: friendlyChallengeName,
+      }),
+    [score, total, accuracy, time, friendlyChallengeName]
+  );
+
   useEffect(() => {
     setAlreadyPlayed(hasPlayedChallenge(slug));
   }, [slug]);
@@ -104,16 +116,34 @@ export default function Results() {
   };
 
   const handleShare = async () => {
-    const shareText = resultShareText(score);
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+    const shareTitle = friendlyChallengeName
+      ? `${friendlyChallengeName} result`
+      : texts.brand.name;
+    const sharePayload = shareUrl ? `${shareCopyText} ${shareUrl}` : shareCopyText;
+
     try {
       if (navigator.share) {
-        await navigator.share({ text: shareText, url: window.location.href });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareText);
-        toast.success("Copied your brag to clipboard.");
-      } else {
-        throw new Error("Share unavailable");
+        const shareData = { title: shareTitle, text: shareCopyText };
+        if (shareUrl) {
+          shareData.url = shareUrl;
+        }
+        await navigator.share(shareData);
+        return;
       }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(sharePayload);
+        toast.success("Copied your brag to clipboard.");
+        return;
+      }
+
+      window.open(
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(sharePayload)}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+      toast.success("Share draft opened in a new tab.");
     } catch (error) {
       console.error("Share failed:", error);
       toast.error("Share feature took a nap. Manual bragging only.");

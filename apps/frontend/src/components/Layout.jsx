@@ -35,7 +35,7 @@ export default function Layout() {
           </main>
         </div>
       </div>
-      <Toaster position="top-center" richColors duration={2200} />
+      <Toaster position="top-center" richColors duration={3600} />
     </>
   );
 }

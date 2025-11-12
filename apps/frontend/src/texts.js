@@ -185,5 +185,24 @@ export const texts = {
   },
 };
 
-export const resultShareText = (score) =>
-  `I survived Play with ${score} points. Barely.`;
+export const resultShareText = ({
+  score = 0,
+  total = 1,
+  accuracy,
+  time,
+  challengeName,
+} = {}) => {
+  const safeScore = Number.isFinite(score) ? score : 0;
+  const safeTotal = Number.isFinite(total) && total > 0 ? total : 1;
+  const computedAccuracy =
+    typeof accuracy === "number" && Number.isFinite(accuracy)
+      ? Math.round(accuracy)
+      : safeTotal
+      ? Math.round((safeScore / safeTotal) * 100)
+      : 0;
+  const challengeSegment = challengeName ? ` on ${challengeName}` : "";
+  const timeSegment =
+    typeof time === "number" && Number.isFinite(time) && time >= 0 ? ` in ${time}s` : "";
+
+  return `I just scored ${safeScore}/${safeTotal}${challengeSegment}${timeSegment} with ${computedAccuracy}% accuracy at Play. Flex responsibly.`;
+};
