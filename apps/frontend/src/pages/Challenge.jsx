@@ -19,7 +19,9 @@ import { cn } from "@/lib/utils";
 import { texts } from "@/texts";
 import CategoryFilter from "@/components/CategoryFilter";
 
-const QUESTION_TIME = 30;
+const QUESTION_TIME = 60;
+const TIMER_CAUTION_THRESHOLD = 30;
+const TIMER_DANGER_THRESHOLD = 15;
 const SKELETON_CARD_COUNT = 4;
 
 function shuffleArray(items) {
@@ -398,6 +400,16 @@ export default function Challenge() {
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }, [timeLeft]);
 
+  const timerColor = useMemo(() => {
+    if (timeLeft <= TIMER_DANGER_THRESHOLD) {
+      return "#ef4444"; // red
+    }
+    if (timeLeft <= TIMER_CAUTION_THRESHOLD) {
+      return "#facc15"; // yellow
+    }
+    return "#ffffff";
+  }, [timeLeft]);
+
   const handleAnswer = (option) => {
     if (revealed) return;
     const isCorrect = option === correctAnswer;
@@ -607,10 +619,10 @@ export default function Challenge() {
           <CardContent className="space-y-2 p-5">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">
               <span>{texts.challenge.timerLabel}</span>
-              <Timer className="size-4" />
+              <Timer className="size-4" style={{ color: timerColor }} />
             </div>
-            <p className="font-mono text-4xl">{timerDisplay}</p>
-            <p className="text-xs text-primary-foreground/80">30s per question</p>
+            <p className="font-mono text-4xl" style={{ color: timerColor }}>{timerDisplay}</p>
+            <p className="text-xs text-primary-foreground/80">60s per question</p>
           </CardContent>
         </Card>
 
