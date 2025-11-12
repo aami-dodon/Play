@@ -130,6 +130,10 @@ export default function Challenge() {
 
   const question = questions[current];
   const totalQuestions = questions.length;
+  const shuffledOptions = useMemo(
+    () => shuffleArray(question?.options || []),
+    [question?.options]
+  );
   const availableChallengeCards = useMemo(() => {
     if (!availableQuizzes.length) return [];
     return availableQuizzes.map((quiz) => ({
@@ -556,7 +560,7 @@ export default function Challenge() {
 
         <CardContent className="flex flex-1 flex-col gap-4 lg:overflow-hidden">
           <div className="flex-1 space-y-3 lg:overflow-y-auto lg:pr-1">
-            {question.options?.map((option) => {
+            {shuffledOptions.map((option) => {
               const isCorrect = option === correctAnswer;
               const isWrongSelection = revealed && selected === option && !isCorrect;
               return (
