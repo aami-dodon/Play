@@ -1,6 +1,16 @@
 require("../loadRootEnv");
-const { PrismaClient } = require("@prisma/client");
 
+const rawSeedValue = process.env.SEED ?? process.env.seed;
+const normalizedSeedValue =
+  typeof rawSeedValue === "string" ? rawSeedValue.trim().toLowerCase() : "";
+const shouldSeed = normalizedSeedValue === "true";
+
+if (!shouldSeed) {
+  console.log("⚠️ Demo seeds skipped (set `seed=true` or `SEED=true`).");
+  process.exit(0);
+}
+
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const quizSeeds = [

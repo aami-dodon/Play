@@ -147,7 +147,11 @@ export default function Leaderboard() {
   useEffect(() => {
     const currentFilter = leaderboardsByFilter[activeFilter];
     if (!currentFilter) return;
-    if (currentFilter.entries.length === 0 && !currentFilter.meta.loading) {
+    if (
+      currentFilter.entries.length === 0 &&
+      !currentFilter.meta.loading &&
+      currentFilter.meta.hasMore
+    ) {
       fetchLeaderboardPage(activeFilter, { reset: true });
     }
   }, [activeFilter, leaderboardsByFilter, fetchLeaderboardPage]);
