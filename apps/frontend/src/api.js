@@ -35,3 +35,39 @@ export async function fetchGlobalLeaderboard(limitOrOptions = {}) {
   const res = await axios.get(`${API_BASE}/leaderboard`, { params });
   return res.data;
 }
+
+export async function verifyAdminPassword(password) {
+  const res = await axios.post(
+    `${API_BASE}/admin/verify`,
+    {},
+    {
+      headers: { "x-admin-password": password },
+    },
+  );
+  return res.data;
+}
+
+export async function downloadQuizTemplate(password) {
+  const res = await axios.get(`${API_BASE}/admin/quiz-template`, {
+    responseType: "blob",
+    headers: { "x-admin-password": password },
+  });
+  return res.data;
+}
+
+export async function uploadQuizFile(file, password, options = {}) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (options.force) {
+    formData.append("force", "true");
+  }
+
+  const res = await axios.post(`${API_BASE}/admin/quizzes/upload`, formData, {
+    headers: {
+      "x-admin-password": password,
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return res.data;
+}
