@@ -65,8 +65,5 @@ The backend ships with Excel-driven import helpers:
 
 A standalone script (`apps/backend/scripts/importQuizFromExcel.js`) also reuses the same import logic if you prefer CLI-driven seeds.
 
-## Screenshots
-![Play home page](images/home-page.jpg)
-
 ## License
 This project is released under the [MIT License](LICENSE).
