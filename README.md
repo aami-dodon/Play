@@ -2,15 +2,22 @@
 
 Play is a monorepo that powers the Play Dodon quiz experience, pairing a Vite/React frontend with an Express/Prisma backend that is backed by PostgreSQL and curated quiz data.
 
+## Screenshot
+![Screenshot](images/home-page.jpg)
+
+
 ## Table of contents
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Getting started](#getting-started)
-- [Running the apps](#running-the-apps)
-- [API snapshot](#api-snapshot)
-- [Admin tooling](#admin-tooling)
-- [Screenshots](#screenshots)
-- [License](#license)
+- [Play](#play)
+  - [Screenshot](#screenshot)
+  - [Table of contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Architecture](#architecture)
+  - [Getting started](#getting-started)
+  - [Running the apps](#running-the-apps)
+  - [API snapshot](#api-snapshot)
+  - [Admin tooling](#admin-tooling)
+  - [Screenshots](#screenshots)
+  - [License](#license)
 
 ## Overview
 The frontend is a modern React+Vite SPA that calls the backend API to render featured challenges, roll up leaderboard data, and keep the experience responsive with Tailwind/TanStack utilities. The backend exposes a set of quiz and leaderboard endpoints, seeds data via Prisma, and ships Swagger docs for quick exploration.
