@@ -141,7 +141,7 @@ export default function Admin() {
 
       {isAuthenticated && (
         <div className="space-y-5">
-          <Card className="border-border/60 bg-slate-900/40">
+          <Card className="border-border/60 bg-card/90">
             <CardHeader>
               <CardTitle>Download template</CardTitle>
               <CardDescription>Grab the Excel template, fill it out, then upload it below.</CardDescription>
@@ -156,7 +156,7 @@ export default function Admin() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/60 bg-slate-900/40">
+          <Card className="border-border/60 bg-card/90">
             <CardHeader>
               <CardTitle>Upload Excel</CardTitle>
               <CardDescription>Upload your completed workbook to add or update quizzes.</CardDescription>
