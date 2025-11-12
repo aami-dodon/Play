@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 export default function HomeLiveQueue({ liveQueueItems = [] }) {
   return (
     <div className="space-y-4 w-full max-w-full">
-      <Card className="w-full max-w-full border border-primary/30 bg-gradient-to-br from-slate-950/80 via-slate-900/70 to-slate-900/40 text-white shadow-[0_25px_55px_rgba(4,6,15,0.7)] backdrop-blur-xl animate-[live-queue-glow_8s_ease-in-out_infinite_alternate]">
+      <Card className="w-full max-w-full border border-primary/30 live-queue-card-bg text-white shadow-[0_25px_55px_var(--primary)] backdrop-blur-xl animate-[live-queue-glow_8s_ease-in-out_infinite_alternate]">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-white">Live queue</CardTitle>
           <CardDescription className="text-sm text-slate-200">

@@ -273,11 +273,11 @@
 @keyframes live-queue-glow {
   0% {
     transform: translateY(0);
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.6);
+    box-shadow: 0 20px 45px rgba(46, 166, 58, 0.6);
   }
   100% {
     transform: translateY(-3px);
-    box-shadow: 0 30px 70px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 30px 70px rgba(140, 207, 85, 0.4);
   }
 }
 
