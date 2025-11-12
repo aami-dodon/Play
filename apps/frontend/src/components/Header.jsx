@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { MenuIcon } from "lucide-react";
 
 import ThemeToggle from "./ThemeToggle.jsx";
@@ -35,8 +36,10 @@ function DesktopNav({ pathname }) {
 }
 
 function MobileNav({ pathname }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <MenuIcon className="size-5" />
@@ -62,13 +65,14 @@ function MobileNav({ pathname }) {
               className={`justify-start text-base font-semibold ${
                 isActivePath(pathname, item.href) ? "text-primary" : ""
               }`}
+              onClick={() => setIsOpen(false)}
             >
               <Link to={item.href}>{item.label}</Link>
             </Button>
           ))}
         </div>
         <div className="px-2">
-          <Button asChild className="w-full">
+          <Button asChild className="w-full" onClick={() => setIsOpen(false)}>
             <Link to="/challenge">{texts.brand.punchline}</Link>
           </Button>
         </div>

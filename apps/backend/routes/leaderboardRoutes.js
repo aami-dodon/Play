@@ -61,6 +61,29 @@ const LEADERBOARD_PAGE_SIZE_DEFAULT = 20;
 const LEADERBOARD_PAGE_SIZE_MAX = 50;
 const { Prisma } = require("@prisma/client");
 
+const normalizePeriod = (period) => {
+  if (!period || typeof period !== "string") return "";
+  return period.trim().toLowerCase();
+};
+
+const getPeriodStart = (period) => {
+  const normalized = normalizePeriod(period);
+  const now = new Date();
+  if (normalized === "today") {
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  }
+
+  if (normalized === "week" || normalized === "this week") {
+    const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const utcDay = startOfDay.getUTCDay();
+    const isoDay = (utcDay + 6) % 7;
+    startOfDay.setUTCDate(startOfDay.getUTCDate() - isoDay);
+    return startOfDay;
+  }
+
+  return null;
+};
+
 router.get("/", async (req, res) => {
   const limitParam = parseInt(req.query.limit, 10);
   const offsetParam = parseInt(req.query.offset, 10);
@@ -79,6 +102,11 @@ router.get("/", async (req, res) => {
   if (req.query.challenge && req.query.challenge.trim()) {
     const challengeParam = req.query.challenge.trim();
     filterConditions.push(Prisma.sql`q.slug = ${challengeParam}`);
+  }
+
+  const periodStart = getPeriodStart(req.query.period);
+  if (periodStart) {
+    filterConditions.push(Prisma.sql`l.created_at >= ${periodStart}`);
   }
 
   const filterWhere =
@@ -192,6 +220,7 @@ router.get("/", async (req, res) => {
         FROM leaderboard l
         JOIN quizzes q ON q.id = l.quiz_id
         WHERE l.username IS NOT NULL AND l.username <> ''
+        ${filterWhere}
       ) tmp
     `);
     const challengeLookup =

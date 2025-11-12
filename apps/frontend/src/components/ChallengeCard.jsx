@@ -15,9 +15,9 @@ import {
 } from "./ui/card";
 
 const difficultyColors = {
-  Chill: "bg-secondary text-secondary-foreground",
-  Spicy: "bg-orange-500/15 text-orange-400",
-  Chaotic: "bg-destructive/20 text-destructive",
+  Chill: "bg-[color:var(--secondary)]/20 text-[color:var(--primary-foreground)]",
+  Spicy: "bg-[color:var(--secondary)]/30 text-[color:var(--primary-foreground)]",
+  Chaotic: "bg-[color:var(--secondary)]/40 text-[color:var(--primary-foreground)]",
 };
 
 export default function ChallengeCard({ challenge, ctaLabel = "Play", compact }) {

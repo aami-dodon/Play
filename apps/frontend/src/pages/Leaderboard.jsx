@@ -16,77 +16,141 @@ import { readLocalPlayerName } from "@/lib/playedChallenges";
 import { texts } from "@/texts";
 import { Button } from "@/components/ui/button";
 
+const LEADERBOARD_FILTERS = texts.leaderboard.filters;
+const LEADERBOARD_FILTER_PERIOD = LEADERBOARD_FILTERS.reduce((map, filter) => {
+  const normalized = filter.toLowerCase();
+  if (normalized.includes("today")) {
+    map[filter] = "today";
+  } else if (normalized.includes("week")) {
+    map[filter] = "week";
+  } else {
+    map[filter] = undefined;
+  }
+  return map;
+}, {});
 const LEADERBOARD_PAGE_SIZE = 15;
 const HIGHLIGHT_PLAYER_NAME = "GlitchQueen";
 
+const createFilterState = () => ({
+  entries: [],
+  challengeLookup: {},
+  meta: { loading: false, hasMore: true, error: "" },
+});
+
 export default function Leaderboard() {
-  const [entries, setEntries] = useState([]);
+  const [leaderboardsByFilter, setLeaderboardsByFilter] = useState(() =>
+    LEADERBOARD_FILTERS.reduce((acc, filter) => {
+      acc[filter] = createFilterState();
+      return acc;
+    }, {})
+  );
+  const [activeFilter, setActiveFilter] = useState(LEADERBOARD_FILTERS[0]);
   const [localPlayerName, setLocalPlayerName] = useState(null);
-  const [meta, setMeta] = useState({ loading: true, hasMore: true, error: "" });
-  const [challengeLookup, setChallengeLookup] = useState({});
-  const offsetRef = useRef(0);
-  const hasMoreRef = useRef(true);
-  const loadingRef = useRef(false);
+  const paginationRefs = useRef(
+    LEADERBOARD_FILTERS.reduce((acc, filter) => {
+      acc[filter] = { offset: 0, hasMore: true, loading: false };
+      return acc;
+    }, {})
+  );
   const loadMoreRef = useRef(null);
   const isMountedRef = useRef(true);
+
   const safeSetState = useCallback((setter, value) => {
     if (!isMountedRef.current) return;
     setter(value);
   }, []);
 
   const fetchLeaderboardPage = useCallback(
-    async ({ reset = false } = {}) => {
-      if (!reset && !hasMoreRef.current) return;
-      if (loadingRef.current) return;
+    async (filter, { reset = false } = {}) => {
+      if (!filter || !LEADERBOARD_FILTERS.includes(filter)) return;
 
-      loadingRef.current = true;
-      safeSetState(setMeta, (prev) => ({ ...prev, loading: true, error: reset ? "" : prev.error }));
+      const pagination = paginationRefs.current[filter];
+      if (!pagination) return;
+      if (!reset && !pagination.hasMore) return;
+      if (pagination.loading) return;
 
-      const offset = reset ? 0 : offsetRef.current;
+      const offset = reset ? 0 : pagination.offset;
+      const periodParam = LEADERBOARD_FILTER_PERIOD[filter];
+
+      pagination.loading = true;
+      safeSetState(setLeaderboardsByFilter, (prev) => {
+        const prevFilterState = prev[filter] ?? createFilterState();
+        return {
+          ...prev,
+          [filter]: {
+            ...prevFilterState,
+            meta: {
+              ...prevFilterState.meta,
+              loading: true,
+              error: reset ? "" : prevFilterState.meta.error,
+            },
+          },
+        };
+      });
 
       try {
-        const payload = await fetchGlobalLeaderboard({ limit: LEADERBOARD_PAGE_SIZE, offset });
-        const normalized = Array.isArray(payload) ? { entries: payload } : payload || {};
-        const items = Array.isArray(normalized.entries) ? normalized.entries : [];
-        const lookupEntries = normalized.challengeLookup ?? {};
-        if (reset) {
-          safeSetState(setEntries, () => items);
-        } else {
-          safeSetState(setEntries, (prev) => [...prev, ...items]);
-        }
-        safeSetState(setChallengeLookup, () => lookupEntries);
-
+        const payload = await fetchGlobalLeaderboard({
+          limit: LEADERBOARD_PAGE_SIZE,
+          offset,
+          ...(periodParam ? { period: periodParam } : {}),
+        });
+        const items = Array.isArray(payload?.entries) ? payload.entries : [];
         const hasMore =
-          typeof normalized.hasMore === "boolean"
-            ? normalized.hasMore
+          typeof payload?.hasMore === "boolean"
+            ? payload?.hasMore
             : items.length === LEADERBOARD_PAGE_SIZE;
-        hasMoreRef.current = hasMore;
-        safeSetState(setMeta, (prev) => ({ ...prev, hasMore, error: "" }));
+        const nextOffset =
+          typeof payload?.nextOffset === "number" ? payload.nextOffset : offset + items.length;
 
-        const nextOffset = normalized.nextOffset ?? (offset + items.length);
-        offsetRef.current = nextOffset;
+        pagination.hasMore = hasMore;
+        pagination.offset = nextOffset;
+
+        safeSetState(setLeaderboardsByFilter, (prev) => {
+          const prevFilterState = prev[filter] ?? createFilterState();
+          return {
+            ...prev,
+            [filter]: {
+              entries: reset ? items : [...prevFilterState.entries, ...items],
+              challengeLookup: payload?.challengeLookup ?? prevFilterState.challengeLookup,
+              meta: {
+                loading: false,
+                hasMore,
+                error: "",
+              },
+            },
+          };
+        });
       } catch (err) {
-        console.error("Failed to load global leaderboard:", err);
-        safeSetState(setMeta, (prev) => ({
-          ...prev,
-          error: texts.leaderboard.fallbackCaption,
-        }));
+        console.error(`Failed to load ${filter} leaderboard:`, err);
+        pagination.hasMore = false;
+        safeSetState(setLeaderboardsByFilter, (prev) => {
+          const prevFilterState = prev[filter] ?? createFilterState();
+          return {
+            ...prev,
+            [filter]: {
+              ...prevFilterState,
+              meta: {
+                ...prevFilterState.meta,
+                loading: false,
+                error: texts.leaderboard.fallbackCaption,
+              },
+            },
+          };
+        });
       } finally {
-        loadingRef.current = false;
-        safeSetState(setMeta, (prev) => ({ ...prev, loading: false }));
+        pagination.loading = false;
       }
     },
     [safeSetState]
   );
 
   useEffect(() => {
-    offsetRef.current = 0;
-    hasMoreRef.current = true;
-    safeSetState(setEntries, () => []);
-    safeSetState(setMeta, () => ({ loading: true, hasMore: true, error: "" }));
-    safeSetState(setChallengeLookup, () => ({}));
-    fetchLeaderboardPage({ reset: true });
-  }, [fetchLeaderboardPage, safeSetState]);
+    const currentFilter = leaderboardsByFilter[activeFilter];
+    if (!currentFilter) return;
+    if (currentFilter.entries.length === 0 && !currentFilter.meta.loading) {
+      fetchLeaderboardPage(activeFilter, { reset: true });
+    }
+  }, [activeFilter, leaderboardsByFilter, fetchLeaderboardPage]);
 
   useEffect(() => {
     setLocalPlayerName(readLocalPlayerName());
@@ -98,8 +162,9 @@ export default function Leaderboard() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasMoreRef.current && !loadingRef.current) {
-          fetchLeaderboardPage();
+        const pagination = paginationRefs.current[activeFilter];
+        if (entry.isIntersecting && pagination && pagination.hasMore && !pagination.loading) {
+          fetchLeaderboardPage(activeFilter);
         }
       },
       { rootMargin: "200px", threshold: 0.1 }
@@ -110,7 +175,7 @@ export default function Leaderboard() {
     return () => {
       observer.disconnect();
     };
-  }, [loadMoreElement, fetchLeaderboardPage]);
+  }, [activeFilter, fetchLeaderboardPage, loadMoreElement]);
 
   useEffect(() => {
     return () => {
@@ -118,14 +183,20 @@ export default function Leaderboard() {
     };
   }, []);
 
-  const baseRows = useMemo(() => {
-    const formatted = formatLeaderboardRows(entries, { fallbackCategory: "Arcade" });
-    if (formatted.length) {
-      return formatted;
-    }
-    return texts.leaderboard.mockPlayers;
-  }, [entries]);
+  const entriesByFilter = useMemo(() => {
+    return LEADERBOARD_FILTERS.reduce((acc, filter) => {
+      const formatted = formatLeaderboardRows(leaderboardsByFilter[filter]?.entries ?? [], {
+        fallbackCategory: "Arcade",
+      });
+      acc[filter] = formatted;
+      return acc;
+    }, {});
+  }, [leaderboardsByFilter]);
 
+  const allTimeFilter = LEADERBOARD_FILTERS[0];
+  const baseRows = entriesByFilter[allTimeFilter]?.length
+    ? entriesByFilter[allTimeFilter]
+    : texts.leaderboard.mockPlayers;
   const highlightPlayerName = localPlayerName || HIGHLIGHT_PLAYER_NAME;
 
   const leaderboardSummary = useMemo(() => {
@@ -167,22 +238,7 @@ export default function Leaderboard() {
     };
   }, [baseRows, highlightPlayerName]);
 
-  const leaderboardByFilter = useMemo(() => {
-    const weekly = baseRows.map((player, index) => ({
-      ...player,
-      score: Math.max(player.score - index * 120, 0),
-    }));
-    const today = baseRows.slice(0, 5).map((player, index) => ({
-      ...player,
-      score: Math.max(player.score - 300 - index * 50, 0),
-    }));
-
-    return {
-      "All Time": baseRows,
-      "This Week": weekly,
-      Today: today,
-    };
-  }, [baseRows]);
+  const activeFilterState = leaderboardsByFilter[activeFilter] ?? createFilterState();
 
   return (
     <div className="space-y-8">
@@ -211,42 +267,58 @@ export default function Leaderboard() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="All Time" className="space-y-4">
+      <Tabs
+        value={activeFilter}
+        onValueChange={(value) => {
+          if (LEADERBOARD_FILTERS.includes(value)) {
+            setActiveFilter(value);
+          }
+        }}
+        className="space-y-4"
+      >
         <TabsList>
-          {texts.leaderboard.filters.map((filter) => (
+          {LEADERBOARD_FILTERS.map((filter) => (
             <TabsTrigger key={filter} value={filter}>
               {filter}
             </TabsTrigger>
           ))}
         </TabsList>
-        {texts.leaderboard.filters.map((filter) => (
-          <TabsContent key={filter} value={filter}>
-            {meta.loading && filter !== "All Time" ? (
-              <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
-                Loading {filter.toLowerCase()} leaderboard...
-              </Card>
-            ) : (
-              <LeaderboardTable
-                title={`${filter} leaderboard`}
-                subtitle={filter === "All Time" ? "Legends only." : "Still counts."}
-                players={leaderboardByFilter[filter] || []}
-                highlightPlayer={leaderboardSummary.highlightPlayer}
-                caption={filter === "All Time" && meta.error ? meta.error : undefined}
-                challengeLookup={challengeLookup}
-              />
-            )}
-          </TabsContent>
-        ))}
+        {LEADERBOARD_FILTERS.map((filter) => {
+          const filterState = leaderboardsByFilter[filter] ?? createFilterState();
+          const players = entriesByFilter[filter] ?? [];
+          const isLoading = filterState.meta.loading;
+          const isAllTime = filter === allTimeFilter;
+          const caption = isAllTime && filterState.meta.error ? filterState.meta.error : undefined;
+
+          return (
+            <TabsContent key={filter} value={filter}>
+              {isLoading ? (
+                <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
+                  Loading {filter.toLowerCase()} leaderboard...
+                </Card>
+              ) : (
+                <LeaderboardTable
+                  title={`${filter} leaderboard`}
+                  subtitle={isAllTime ? "Legends only." : "Still counts."}
+                  players={players}
+                  highlightPlayer={leaderboardSummary.highlightPlayer}
+                  caption={caption}
+                  challengeLookup={filterState.challengeLookup}
+                />
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
       <div className="space-y-3">
-        {meta.hasMore && (
+        {activeFilterState.meta.hasMore && (
           <div className="flex justify-center">
             <Button
               variant="outline"
-              onClick={() => fetchLeaderboardPage()}
-              disabled={meta.loading}
+              onClick={() => fetchLeaderboardPage(activeFilter)}
+              disabled={activeFilterState.meta.loading}
             >
-              {meta.loading ? "Loading more leaderboard..." : "Load more leaderboard"}
+              {activeFilterState.meta.loading ? "Loading more leaderboard..." : "Load more leaderboard"}
             </Button>
           </div>
         )}
