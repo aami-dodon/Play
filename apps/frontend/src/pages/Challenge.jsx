@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchCategories, fetchQuestions, fetchQuizzes } from "@/api";
+import { fetchCategories, fetchQuestions, fetchQuizzes } from "@/client";
 import ChallengeCard from "@/components/ChallengeCard";
 import { Button } from "@/components/ui/button";
 import {

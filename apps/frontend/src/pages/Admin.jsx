@@ -6,7 +6,7 @@ import {
   downloadQuizTemplate,
   uploadQuizFile,
   verifyAdminPassword,
-} from "@/api";
+} from "@/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchLeaderboard, submitScore } from "@/api";
+import { fetchLeaderboard, submitScore } from "@/client";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import StatTiles from "@/components/StatTiles";
 import { Button } from "@/components/ui/button";

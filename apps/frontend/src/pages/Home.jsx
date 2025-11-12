@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { fetchQuizzes, fetchGlobalLeaderboard } from "@/api";
+import { fetchQuizzes, fetchGlobalLeaderboard } from "@/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {

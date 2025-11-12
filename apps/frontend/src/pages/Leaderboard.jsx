@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fetchGlobalLeaderboard } from "@/api";
+import { fetchGlobalLeaderboard } from "@/client";
 import { formatLeaderboardRows } from "@/lib/leaderboard";
 import { readLocalPlayerName } from "@/lib/playedChallenges";
 import { texts } from "@/texts";
