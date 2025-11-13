@@ -105,6 +105,8 @@ export default function SnakePage() {
   const [foodDelay, setFoodDelay] = useState(FOOD_INITIAL_DELAY);
   const [growthCycle, setGrowthCycle] = useState(0);
   const [gameOverDialogOpen, setGameOverDialogOpen] = useState(false);
+  const [isTouchMobile, setIsTouchMobile] = useState(false);
+  const maxLengthRef = useRef(createInitialSnake().length);
 
   const elapsedRef = useRef(elapsed);
 
@@ -112,14 +114,38 @@ export default function SnakePage() {
     elapsedRef.current = elapsed;
   }, [elapsed]);
 
-  const endRun = useCallback(
-    (finalLength) => {
-      setStatus("over");
-      setFinalStats({ score: finalLength, time: elapsedRef.current });
-      setFood(null);
-    },
-    [],
-  );
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+    const mediaQuery = window.matchMedia("(pointer: coarse) and (max-width: 768px)");
+    const updateIsTouchMobile = () => setIsTouchMobile(mediaQuery.matches);
+    updateIsTouchMobile();
+    const addListener = mediaQuery.addEventListener ? "addEventListener" : "addListener";
+    const removeListener = mediaQuery.removeEventListener ? "removeEventListener" : "removeListener";
+    if (addListener === "addEventListener") {
+      mediaQuery.addEventListener("change", updateIsTouchMobile);
+    } else {
+      mediaQuery.addListener(updateIsTouchMobile);
+    }
+    return () => {
+      if (removeListener === "removeEventListener") {
+        mediaQuery.removeEventListener("change", updateIsTouchMobile);
+      } else {
+        mediaQuery.removeListener(updateIsTouchMobile);
+      }
+    };
+  }, []);
+
+  const endRun = useCallback(() => {
+    setStatus("over");
+    setFinalStats({ score: maxLengthRef.current, time: elapsedRef.current });
+    setFood(null);
+  }, []);
+
+  const recordMaxLength = useCallback((length) => {
+    maxLengthRef.current = Math.max(maxLengthRef.current, length);
+  }, []);
 
   const startRun = useCallback(() => {
     const initialSnake = createInitialSnake();
@@ -132,6 +158,7 @@ export default function SnakePage() {
     setFoodDelay(FOOD_INITIAL_DELAY);
     setGrowthCycle(0);
     setGameOverDialogOpen(false);
+    maxLengthRef.current = initialSnake.length;
   }, []);
 
   const handleSubmitScore = useCallback(async () => {
@@ -188,7 +215,7 @@ export default function SnakePage() {
           nextHead.y < 0 ||
           nextHead.y >= BOARD_HEIGHT;
         if (hitsWall) {
-          endRun(currentSnake.length);
+          endRun();
           return currentSnake;
         }
 
@@ -197,17 +224,18 @@ export default function SnakePage() {
           (segment) => segment.x === nextHead.x && segment.y === nextHead.y,
         );
         if (hitsSelf) {
-          endRun(currentSnake.length);
+          endRun();
           return currentSnake;
         }
 
         const nextSnake = [nextHead, ...currentSnake];
         nextSnake.pop();
+        recordMaxLength(nextSnake.length);
 
         if (food && nextHead.x === food.x && nextHead.y === food.y) {
           const trimmed = nextSnake.slice(0, Math.max(0, nextSnake.length - 2));
           if (trimmed.length === 0) {
-            endRun(0);
+            endRun();
             return trimmed;
           }
           setFood(getRandomFoodPosition(trimmed));
@@ -222,7 +250,7 @@ export default function SnakePage() {
     return () => {
       window.clearTimeout(timer);
     };
-  }, [direction, food, status, endRun]);
+  }, [direction, food, status, endRun, recordMaxLength]);
 
   useEffect(() => {
     if (status !== "running") return undefined;
@@ -231,31 +259,37 @@ export default function SnakePage() {
         if (!currentSnake.length) return currentSnake;
         const tail = currentSnake[currentSnake.length - 1];
         if (!tail) return currentSnake;
-        return [...currentSnake, { ...tail }];
+        const grown = [...currentSnake, { ...tail }];
+        recordMaxLength(grown.length);
+        return grown;
       });
       setGrowthCycle((value) => value + 1);
     }, GROWTH_INTERVAL_MS);
     return () => window.clearTimeout(growthTimer);
-  }, [status, growthCycle]);
+  }, [status, growthCycle, recordMaxLength]);
 
   useEffect(() => {
     if (status !== "running" || !food || snake.length === 0) return undefined;
-      const tracker = window.setTimeout(() => {
-        const head = snake[0];
-        const nextFood = moveFoodTowardsSnake(food, head);
-        const caught = snake.some(
-          (segment) => segment.x === nextFood.x && segment.y === nextFood.y,
-        );
+    const tracker = window.setTimeout(() => {
+      const head = snake[0];
+      const nextFood = moveFoodTowardsSnake(food, head);
+      const caught = snake.some(
+        (segment) => segment.x === nextFood.x && segment.y === nextFood.y,
+      );
 
-        if (caught) {
-          toast.error("Hunter food caught you—lose two segments and keep dodging.");
-          const trimmed = snake.slice(0, Math.max(0, snake.length - 2));
-          if (trimmed.length === 0) {
-            setSnake(trimmed);
-            endRun(0);
-            return;
-          }
+      if (caught) {
+        toast.error(
+          isTouchMobile
+            ? "The hunter food devoured you—lose two segments and keep evading."
+            : "Hunter food caught you—lose two segments and keep dodging.",
+        );
+        const trimmed = snake.slice(0, Math.max(0, snake.length - 2));
+        if (trimmed.length === 0) {
           setSnake(trimmed);
+          endRun();
+          return;
+        }
+        setSnake(trimmed);
         setFood(getRandomFoodPosition(trimmed));
         setFoodDelay(FOOD_INITIAL_DELAY);
         return;
@@ -266,7 +300,7 @@ export default function SnakePage() {
     }, foodDelay);
 
     return () => window.clearTimeout(tracker);
-  }, [status, food, snake, foodDelay, endRun]);
+  }, [status, food, snake, foodDelay, endRun, isTouchMobile]);
 
   const handleKeyDown = useCallback(
     (event) => {
@@ -295,8 +329,12 @@ export default function SnakePage() {
   const currentScore = status === "over" && finalStats ? finalStats.score : snake.length;
   const lastRunLabel =
     finalStats && status === "over"
-      ? `Last chase · ${finalStats.score} lengths · ${formatTime(finalStats.time)}`
-      : "Keep dodging to grow your tail.";
+      ? `${isTouchMobile ? "Longest chase" : "Last chase"} · ${finalStats.score} lengths · ${formatTime(
+          finalStats.time,
+        )}`
+      : isTouchMobile
+        ? "Keep evading the hungry food to stretch your tail."
+        : "Keep dodging to grow your tail.";
 
   const statusLabel = status === "running" ? "Live chase" : status === "over" ? "Humbled" : "Waiting";
   const statusVariant = status === "running" ? "secondary" : "outline";
@@ -306,6 +344,9 @@ export default function SnakePage() {
   const timerLabel = status === "over" ? "Final time" : "Time alive";
   const timerHelper =
     status === "running" ? "Live chase" : status === "over" ? "Last run logged" : "Ready to launch";
+  const footerCopy = isTouchMobile
+    ? "Master the grid. The hungry food keeps closing in, and the arena still has that familiar swagger."
+    : "Master the grid. The hunter keeps closing. Same arena, same swagger as every challenge.";
 
   const sidebar = (
     <>
@@ -388,9 +429,7 @@ export default function SnakePage() {
               )}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Master the grid. The hunter keeps closing. Same arena, same swagger as every challenge.
-          </p>
+          <p className="text-xs text-muted-foreground">{footerCopy}</p>
         </CardContent>
       </Card>
       <Dialog open={gameOverDialogOpen} onOpenChange={setGameOverDialogOpen}>

@@ -658,7 +658,7 @@ export default function Challenge() {
                   variant="outline"
                   disabled={revealed}
                   className={cn(
-                    "h-auto justify-start rounded-2xl border-2 border-border/70 bg-background/80 px-4 py-4 text-left text-base font-semibold text-foreground transition-all",
+                    "h-auto justify-start rounded-2xl border-2 border-border/70 bg-background/80 px-3 py-3 text-left text-base font-semibold text-foreground transition-all sm:px-4 sm:py-4",
                     revealed && isCorrect && "border-chart-1 bg-chart-1/20 text-primary",
                     isWrongSelection && "border-destructive/80 bg-destructive/15 text-destructive"
                   )}
