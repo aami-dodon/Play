@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { fetchQuizzes, fetchGlobalLeaderboard } from "@/client";
+import { fetchArcades, fetchQuizzes, fetchGlobalLeaderboard } from "@/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -17,6 +17,7 @@ import { texts } from "@/texts";
 import HomeHero from "@/components/home/HomeHero";
 import HomeLiveQueue from "@/components/home/HomeLiveQueue";
 import HomeFeatured from "@/components/home/HomeFeatured";
+import HomeArcades from "@/components/home/HomeArcades";
 import HomeLeaderboardPreview from "@/components/home/HomeLeaderboardPreview";
 
 function decorateChallenges(quizzes) {
@@ -41,6 +42,13 @@ function decorateChallenges(quizzes) {
   };
 }
 
+function decorateArcades(arcades = []) {
+  if (!arcades?.length) {
+    return [];
+  }
+  return arcades.slice(0, 4);
+}
+
 function extractQuizItems(payload) {
   if (Array.isArray(payload)) return payload;
   if (payload && Array.isArray(payload.items)) return payload.items;
@@ -56,8 +64,10 @@ function extractLeaderboardEntries(payload) {
 export default function Home() {
   const [quizzes, setQuizzes] = useState([]);
   const [overallLeaderboard, setOverallLeaderboard] = useState([]);
+  const [arcadeGames, setArcadeGames] = useState([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const [loadingArcades, setLoadingArcades] = useState(true);
   const location = useLocation();
   const notice = location.state?.notice;
   const [dialogOpen, setDialogOpen] = useState(Boolean(notice));
@@ -65,15 +75,17 @@ export default function Home() {
     hero: true,
     liveQueue: true,
     featured: true,
+    arcades: true,
     leaderboard: true,
   };
 
   useEffect(() => {
     let mounted = true;
     async function loadHomeData() {
-      const [featuredRes, leaderboardRes] = await Promise.allSettled([
+      const [featuredRes, leaderboardRes, arcadeRes] = await Promise.allSettled([
         fetchQuizzes({ featured: true }),
         fetchGlobalLeaderboard(6),
+        fetchArcades(),
       ]);
 
       if (!mounted) return;
@@ -92,8 +104,16 @@ export default function Home() {
         setOverallLeaderboard([]);
       }
 
+      if (arcadeRes.status === "fulfilled") {
+        setArcadeGames(Array.isArray(arcadeRes.value) ? arcadeRes.value : []);
+      } else {
+        console.error("Failed to load featured arcades:", arcadeRes.reason);
+        setArcadeGames([]);
+      }
+
       setLoadingFeatured(false);
       setLoadingLeaderboard(false);
+      setLoadingArcades(false);
     }
 
     loadHomeData();
@@ -125,6 +145,8 @@ export default function Home() {
     }
     return sample.slice(0, Math.min(3, sample.length));
   }, [challenges]);
+
+  const featuredArcades = useMemo(() => decorateArcades(arcadeGames), [arcadeGames]);
 
   return (
     <div className="space-y-8 w-full max-w-full">
@@ -158,6 +180,10 @@ export default function Home() {
           loading={loadingFeatured}
           featuredFallback={featuredFallback}
         />
+      )}
+
+      {sections.arcades && (
+        <HomeArcades arcades={featuredArcades} loading={loadingArcades} />
       )}
 
       {sections.leaderboard && (

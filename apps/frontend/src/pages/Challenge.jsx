@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { fetchCategories, fetchQuestions, fetchQuizzes } from "@/client";
 import ChallengeCard from "@/components/ChallengeCard";
+import GameplayLayout from "@/components/GameplayLayout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -576,8 +577,59 @@ export default function Challenge() {
     );
   }
 
-    return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:h-[calc(100vh-180px)] lg:flex-row lg:gap-6">
+  return (
+    <GameplayLayout
+      sidebar={
+        <>
+          <Card className="border-border/70 bg-card/95">
+            <CardContent className="space-y-2 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                {texts.challenge.scoreLabel}
+              </p>
+              <p className="text-4xl font-semibold text-foreground">{score}</p>
+              <p className="text-sm text-muted-foreground">Out of {totalQuestions}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card/95 text-primary-foreground">
+            <CardContent className="space-y-2 p-5">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">
+                <span>{texts.challenge.timerLabel}</span>
+                <Timer className="size-4" style={{ color: timerColor }} />
+              </div>
+              <p className="font-mono text-4xl" style={{ color: timerColor }}>
+                {timerDisplay}
+              </p>
+              <p className="text-xs text-primary-foreground/80">60s per question</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card/95">
+            <CardContent className="space-y-2 p-5">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                <span>{texts.challenge.progressLabel}</span>
+                <span>
+                  {current + 1}/{totalQuestions}
+                </span>
+              </div>
+              <Progress value={progressValue} className="h-3 bg-primary/20" />
+              <p className="text-sm font-semibold text-muted-foreground">{egoLabel}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-card/95">
+            <CardContent className="space-y-2 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Challenge
+              </p>
+              <p className="text-base font-semibold text-foreground">
+                {question.quiz_title || question.category || slug || "Arcade run"}
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      }
+    >
       <Card className="flex flex-1 flex-col border-border/70 bg-card/95 lg:overflow-hidden">
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
@@ -648,53 +700,6 @@ export default function Challenge() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid w-full gap-4 sm:grid-cols-2 lg:w-80 lg:shrink-0 lg:grid-cols-1">
-        <Card className="border-border/70 bg-card/95">
-          <CardContent className="space-y-2 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              {texts.challenge.scoreLabel}
-            </p>
-            <p className="text-4xl font-semibold text-foreground">{score}</p>
-            <p className="text-sm text-muted-foreground">Out of {totalQuestions}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/95 text-primary-foreground">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">
-              <span>{texts.challenge.timerLabel}</span>
-              <Timer className="size-4" style={{ color: timerColor }} />
-            </div>
-            <p className="font-mono text-4xl" style={{ color: timerColor }}>{timerDisplay}</p>
-            <p className="text-xs text-primary-foreground/80">60s per question</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/95">
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              <span>{texts.challenge.progressLabel}</span>
-              <span>
-                {current + 1}/{totalQuestions}
-              </span>
-            </div>
-            <Progress value={progressValue} className="h-3 bg-primary/20" />
-            <p className="text-sm font-semibold text-muted-foreground">{egoLabel}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/95">
-          <CardContent className="space-y-2 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Challenge
-            </p>
-            <p className="text-base font-semibold text-foreground">
-              {question.quiz_title || question.category || slug || "Arcade run"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </GameplayLayout>
   );
 }

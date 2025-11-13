@@ -34,6 +34,13 @@ export const texts = {
       title: "Featured challenges",
       subtitle: "Fresh drops with more attitude than your group chat.",
     },
+    arcades: {
+      title: "Featured arcades",
+      subtitle: "Mini-game detours for when the challenge queue needs a cooldown.",
+      loading: "Loading arcade runs...",
+      emptyState: "Arcade lineup is taking a coffee break. Check back in a sec.",
+      cta: "View all arcades →",
+    },
     leaderboardPreview: {
       title: "Hall of Fame (and occasional shame).",
       subtitle: "These legends answered faster than you can Google.",
