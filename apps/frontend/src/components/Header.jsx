@@ -71,11 +71,6 @@ function MobileNav({ pathname }) {
             </Button>
           ))}
         </div>
-        <div className="px-2">
-          <Button asChild className="w-full" onClick={() => setIsOpen(false)}>
-            <Link to="/challenge">{texts.brand.punchline}</Link>
-          </Button>
-        </div>
         <div className="px-2 pb-6">
           <ThemeToggle className="w-full justify-center" />
         </div>
@@ -112,9 +107,6 @@ export default function Header() {
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
           <DesktopNav pathname={pathname} />
           <ThemeToggle className="hidden md:inline-flex" />
-          <Button asChild size="sm" className="hidden md:inline-flex rounded-full px-6">
-            <Link to="/challenge">{texts.brand.punchline}</Link>
-          </Button>
           <MobileNav pathname={pathname} />
         </div>
       </div>
