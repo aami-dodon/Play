@@ -137,6 +137,12 @@ export default function SnakePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0 });
+    }
+  }, []);
+
   const endRun = useCallback(() => {
     setStatus("over");
     setFinalStats({ score: maxLengthRef.current, time: elapsedRef.current });
