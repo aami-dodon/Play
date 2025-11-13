@@ -36,6 +36,18 @@ export async function fetchGlobalLeaderboard(limitOrOptions = {}) {
   return res.data;
 }
 
+export async function fetchSnakeLeaderboard(limit = 12) {
+  const res = await axios.get(`${API_BASE}/games/snake/leaderboard`, {
+    params: { limit },
+  });
+  return res.data?.entries ?? [];
+}
+
+export async function submitSnakeScore(payload) {
+  const res = await axios.post(`${API_BASE}/games/snake/score`, payload);
+  return res.data;
+}
+
 export async function verifyAdminPassword(password) {
   const res = await axios.post(
     `${API_BASE}/admin/verify`,

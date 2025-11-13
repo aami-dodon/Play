@@ -7,6 +7,7 @@ import Challenge from "./pages/Challenge.jsx";
 import Results from "./pages/Results.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Admin from "./pages/Admin.jsx";
+import SnakePage from "./features/snake/SnakePage.jsx";
 import Layout from "./components/Layout.jsx";
 
 import "./index.css";
@@ -19,6 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/challenge" element={<Challenge />} />
         <Route path="/challenge/:slug" element={<Challenge />} />
         <Route path="/play/:slug" element={<Challenge />} />
+        <Route path="/snake" element={<SnakePage />} />
         <Route path="/results/:slug" element={<Results />} />
         <Route path="/result/:slug" element={<Results />} />
         <Route path="/leaderboard" element={<Leaderboard />} />

@@ -8,6 +8,7 @@ const { testConnection } = require("./prismaClient");
 const quizRoutes = require("./routes/quizRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const snakeRoutes = require("./features/snake/snakeRoutes");
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3000;
@@ -44,7 +45,11 @@ const swaggerOptions = {
     },
     servers: [{ url: API_PREFIX }],
   },
-  apis: [path.join(__dirname, "server.js"), path.join(__dirname, "routes/*.js")],
+  apis: [
+    path.join(__dirname, "server.js"),
+    path.join(__dirname, "routes/*.js"),
+    path.join(__dirname, "features/snake/*.js"),
+  ],
 };
 
 const swaggerSpec = swaggerJsDoc(swaggerOptions);
@@ -79,6 +84,7 @@ apiRouter.get("/health", (req, res) => res.send("OK"));
 apiRouter.use("/quizzes", quizRoutes);
 apiRouter.use("/leaderboard", leaderboardRoutes);
 apiRouter.use("/admin", adminRoutes);
+apiRouter.use("/games/snake", snakeRoutes);
 
 app.use(API_PREFIX, apiRouter);
 
