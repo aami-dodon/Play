@@ -377,7 +377,7 @@ export default function SnakePage() {
             <div className="relative aspect-square w-full rounded-2xl border border-white/10 bg-slate-950/40 p-2 transition">
               <SnakeBoard width={BOARD_WIDTH} height={BOARD_HEIGHT} snake={snake} food={food} />
               {showPlayOverlay && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[1.1rem] bg-slate-950/80 backdrop-blur-sm">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[1.1rem] bg-background/80 backdrop-blur-sm dark:bg-background/60">
                   <Button size="lg" className="rounded-full px-8" onClick={startRun}>
                     {playButtonLabel}
                   </Button>
