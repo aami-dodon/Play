@@ -11,43 +11,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { fetchArcadeCategories } from "@/client";
+import { fetchArcadeCategories, fetchArcades } from "@/client";
 import { texts } from "@/texts";
-
-const arcadeGames = [
-  {
-    slug: "snake",
-    title: "Snake Game",
-    description:
-      "Classic grid chase with leaderboard submissions, tighter controls, and a hunter that never rests.",
-    category: "Arcade",
-    difficulty: "Chill",
-    players: "Solo run",
-    streak: "Endless evasion",
-    href: "/snake",
-  },
-];
 
 export default function Arcade() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategoryParam = searchParams.get("category") || "";
-  const normalizedCategoryFilter = selectedCategoryParam.trim().toLowerCase();
+  const normalizedCategoryParam = selectedCategoryParam.trim();
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
+  const [arcadeGames, setArcadeGames] = useState([]);
+  const [arcadesLoading, setArcadesLoading] = useState(true);
+  const [arcadesError, setArcadesError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
-    setCategoriesLoading(true);
-    setCategoriesError("");
 
     const loadCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError("");
       try {
-        const response = await fetchArcadeCategories();
+        const result = await fetchArcadeCategories();
         if (!isMounted) return;
-        setCategories(Array.isArray(response) ? response : []);
+        setCategories(Array.isArray(result) ? result : []);
       } catch (error) {
-        console.error("Failed to load categories", error);
+        console.error("Failed to load arcade categories", error);
         if (isMounted) {
           setCategoriesError("Category filter unavailable");
         }
@@ -64,18 +53,42 @@ export default function Arcade() {
     };
   }, []);
 
-  const displayedArcadeGames = useMemo(() => {
-    if (!normalizedCategoryFilter) {
-      return arcadeGames;
-    }
-    return arcadeGames.filter((game) => {
-      const gameCategory = (game.category || "").trim().toLowerCase();
-      return gameCategory === normalizedCategoryFilter;
-    });
-  }, [normalizedCategoryFilter]);
+  useEffect(() => {
+    let isMounted = true;
 
+    const loadArcades = async () => {
+      setArcadesLoading(true);
+      setArcadesError("");
+      try {
+        const params = normalizedCategoryParam ? { category: normalizedCategoryParam } : {};
+        const result = await fetchArcades(params);
+        if (!isMounted) return;
+        setArcadeGames(Array.isArray(result) ? result : []);
+      } catch (error) {
+        console.error("Failed to load arcades", error);
+        if (isMounted) {
+          setArcadesError("Arcade lineup unavailable. Try again soon.");
+        }
+      } finally {
+        if (isMounted) {
+          setArcadesLoading(false);
+        }
+      }
+    };
+
+    loadArcades();
+    return () => {
+      isMounted = false;
+    };
+  }, [normalizedCategoryParam]);
+
+  const displayedArcadeGames = useMemo(() => arcadeGames, [arcadeGames]);
   const totalGames = displayedArcadeGames.length;
-  const gamesLabel = `${totalGames} arcade run${totalGames === 1 ? "" : "s"}`;
+  const gamesLabel = arcadesLoading
+    ? "Loading arcade runs…"
+    : `${totalGames} arcade run${totalGames === 1 ? "" : "s"}`;
+  const showArcadeGrid = totalGames > 0;
+  const showInitialLoading = arcadesLoading && !showArcadeGrid;
 
   const handleCategorySelect = (categoryName) => {
     const nextParams = categoryName ? { category: categoryName } : {};
@@ -116,26 +129,37 @@ export default function Arcade() {
           </div>
           <CategoryFilter
             categories={categories}
-            selectedCategory={selectedCategoryParam}
+            selectedCategory={normalizedCategoryParam}
             loading={categoriesLoading}
             error={categoriesError}
             onSelectCategory={handleCategorySelect}
           />
         </div>
 
-        {totalGames ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {displayedArcadeGames.map((game) => (
-              <ChallengeCard
-                key={game.slug}
-                challenge={game}
-                ctaLabel={texts.arcade.cardCta}
-              />
-            ))}
-          </div>
+        {showInitialLoading ? (
+          <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
+            Loading the arcade lineup...
+          </Card>
+        ) : showArcadeGrid ? (
+          <>
+            {arcadesLoading && (
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Updating the arcade lineup…
+              </p>
+            )}
+            <div className="grid gap-4 md:grid-cols-2">
+              {displayedArcadeGames.map((game) => (
+                <ChallengeCard
+                  key={game.slug}
+                  challenge={game}
+                  ctaLabel={texts.arcade.cardCta}
+                />
+              ))}
+            </div>
+          </>
         ) : (
           <Card className="border-border/70 bg-card/95 p-6 text-sm text-muted-foreground">
-            {texts.arcade.emptyState}
+            {arcadesError || texts.arcade.emptyState}
           </Card>
         )}
       </section>

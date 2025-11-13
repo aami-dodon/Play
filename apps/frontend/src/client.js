@@ -17,6 +17,11 @@ export async function fetchArcadeCategories() {
   return res.data;
 }
 
+export async function fetchArcades(params = {}) {
+  const res = await axios.get(`${API_BASE}/arcades`, { params });
+  return res.data;
+}
+
 export async function fetchQuestions(slug) {
   const res = await axios.get(`${API_BASE}/quizzes/${slug}/questions`);
   return res.data;
