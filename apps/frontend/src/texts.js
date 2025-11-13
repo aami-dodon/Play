@@ -173,9 +173,9 @@ export const texts = {
   arcade: {
     hero: {
       eyebrow: "Arcade menu",
-      title: "Quick thrills, same snarky UI.",
+      title: "Quick thrills, same snarky mind.",
       description:
-        "Grid-based antics like Snake live here. The fonts, colors, and vibes mirror the challenge arena so every play feels like it belongs.",
+        "Micro games built for fast reflexes, leaderboard glory, and unapologetic arcade trash-talk.",
     },
     sectionTitle: "Arcade sessions",
     sectionSubtitle: "Tap a card, dive straight into the quick games roster.",

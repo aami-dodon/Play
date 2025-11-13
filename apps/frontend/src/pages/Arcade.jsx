@@ -112,7 +112,7 @@ export default function Arcade() {
             {gamesLabel}
           </Badge>
           <Badge variant="outline" className="rounded-full px-3 text-[0.6rem] tracking-[0.3em]">
-            Same layout as the Challenge arena
+            Arcade-ready from UI to controls
           </Badge>
         </CardContent>
       </Card>
