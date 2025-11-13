@@ -6,6 +6,49 @@ const ARCADE_HREFS = {
   "snake-arcade": "/snake",
 };
 
+/**
+ * @openapi
+ * /arcades:
+ *   get:
+ *     summary: Retrieve arcade challenges
+ *     tags:
+ *       - Arcades
+ *     parameters:
+ *       - name: category
+ *         in: query
+ *         schema:
+ *           type: string
+ *         description: Optional category filter
+ *     responses:
+ *       200:
+ *         description: List of arcade entries with metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   slug:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   category:
+ *                     type: string
+ *                   difficulty:
+ *                     type: string
+ *                   players:
+ *                     type: string
+ *                   streak:
+ *                     type: string
+ *                   href:
+ *                     type: string
+ *                     nullable: true
+ *       500:
+ *         description: Failed to load arcade entries
+ */
 router.get("/", async (req, res) => {
   try {
     const categoryFilter = typeof req.query.category === "string" ? req.query.category.trim() : "";
@@ -50,6 +93,34 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /arcades/categories:
+ *   get:
+ *     summary: Aggregate statistics for arcade categories
+ *     tags:
+ *       - Arcades
+ *     responses:
+ *       200:
+ *         description: Arcade category metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   category:
+ *                     type: string
+ *                   totalChallenges:
+ *                     type: integer
+ *                   lastActivity:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *       500:
+ *         description: Failed to load arcade categories
+ */
 router.get("/categories", async (_req, res) => {
   try {
     const categories = await prisma.$queryRaw`
