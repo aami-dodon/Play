@@ -308,12 +308,8 @@ export default function SnakePage() {
     return () => window.clearTimeout(tracker);
   }, [status, food, snake, foodDelay, endRun, isTouchMobile]);
 
-  const handleKeyDown = useCallback(
-    (event) => {
-      const key = event.key;
-      const requestedDirection = KEY_TO_DIRECTION[key] || KEY_TO_DIRECTION[key.toLowerCase()];
-      if (!requestedDirection) return;
-      event.preventDefault();
+  const applyDirection = useCallback(
+    (requestedDirection) => {
       setDirection((current) => {
         if (current.x + requestedDirection.x === 0 && current.y + requestedDirection.y === 0) {
           return current;
@@ -325,6 +321,17 @@ export default function SnakePage() {
       }
     },
     [startRun, status],
+  );
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      const key = event.key;
+      const requestedDirection = KEY_TO_DIRECTION[key] || KEY_TO_DIRECTION[key.toLowerCase()];
+      if (!requestedDirection) return;
+      event.preventDefault();
+      applyDirection(requestedDirection);
+    },
+    [applyDirection],
   );
 
   useEffect(() => {
@@ -435,6 +442,48 @@ export default function SnakePage() {
               )}
             </div>
           </div>
+          {isTouchMobile && (
+            <div className="mx-auto mt-6 grid w-full max-w-[260px] gap-2">
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/80 text-sm font-semibold uppercase tracking-[0.3em] text-foreground shadow-md transition hover:border-primary/60 hover:text-primary"
+                  onClick={() => applyDirection({ x: 0, y: -1 })}
+                  aria-label="Move up"
+                >
+                  ↑
+                </button>
+              </div>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/80 text-sm font-semibold uppercase tracking-[0.3em] text-foreground shadow-md transition hover:border-primary/60 hover:text-primary"
+                  onClick={() => applyDirection({ x: -1, y: 0 })}
+                  aria-label="Move left"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/80 text-sm font-semibold uppercase tracking-[0.3em] text-foreground shadow-md transition hover:border-primary/60 hover:text-primary"
+                  onClick={() => applyDirection({ x: 1, y: 0 })}
+                  aria-label="Move right"
+                >
+                  →
+                </button>
+              </div>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/80 text-sm font-semibold uppercase tracking-[0.3em] text-foreground shadow-md transition hover:border-primary/60 hover:text-primary"
+                  onClick={() => applyDirection({ x: 0, y: 1 })}
+                  aria-label="Move down"
+                >
+                  ↓
+                </button>
+              </div>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">{footerCopy}</p>
         </CardContent>
       </Card>
