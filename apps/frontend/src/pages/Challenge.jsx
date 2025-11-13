@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { fetchCategories, fetchQuestions, fetchQuizzes } from "@/client";
 import ChallengeCard from "@/components/ChallengeCard";
 import GameplayLayout from "@/components/GameplayLayout";
+import GameplaySidebarCard from "@/components/GameplaySidebarCard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -581,52 +582,47 @@ export default function Challenge() {
     <GameplayLayout
       sidebar={
         <>
-          <Card className="border-border/70 bg-card/95">
-            <CardContent className="space-y-2 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                {texts.challenge.scoreLabel}
-              </p>
-              <p className="text-4xl font-semibold text-foreground">{score}</p>
-              <p className="text-sm text-muted-foreground">Out of {totalQuestions}</p>
-            </CardContent>
-          </Card>
+      <GameplaySidebarCard label={texts.challenge.scoreLabel}>
+        <p className="text-4xl font-semibold text-foreground">{score}</p>
+        <p className="text-sm text-muted-foreground">Out of {totalQuestions}</p>
+      </GameplaySidebarCard>
 
-          <Card className="border-border/70 bg-card/95 text-primary-foreground">
-            <CardContent className="space-y-2 p-5">
-              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-foreground/80">
-                <span>{texts.challenge.timerLabel}</span>
-                <Timer className="size-4" style={{ color: timerColor }} />
-              </div>
-              <p className="font-mono text-4xl" style={{ color: timerColor }}>
-                {timerDisplay}
-              </p>
-              <p className="text-xs text-primary-foreground/80">60s per question</p>
-            </CardContent>
-          </Card>
+      <GameplaySidebarCard
+        label={
+          <>
+            <span>{texts.challenge.timerLabel}</span>
+            <Timer className="size-4" style={{ color: timerColor }} />
+          </>
+        }
+        labelClassName="flex items-center justify-between text-primary-foreground/80"
+        className="text-primary-foreground"
+      >
+        <p className="font-mono text-4xl" style={{ color: timerColor }}>
+          {timerDisplay}
+        </p>
+        <p className="text-xs text-primary-foreground/80">60s per question</p>
+      </GameplaySidebarCard>
 
-          <Card className="border-border/70 bg-card/95">
-            <CardContent className="space-y-2 p-5">
-              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                <span>{texts.challenge.progressLabel}</span>
-                <span>
-                  {current + 1}/{totalQuestions}
-                </span>
-              </div>
-              <Progress value={progressValue} className="h-3 bg-primary/20" />
-              <p className="text-sm font-semibold text-muted-foreground">{egoLabel}</p>
-            </CardContent>
-          </Card>
+      <GameplaySidebarCard
+        label={
+          <>
+            <span>{texts.challenge.progressLabel}</span>
+            <span>
+              {current + 1}/{totalQuestions}
+            </span>
+          </>
+        }
+        labelClassName="flex items-center justify-between text-muted-foreground"
+      >
+        <Progress value={progressValue} className="h-3 bg-primary/20" />
+        <p className="text-sm font-semibold text-muted-foreground">{egoLabel}</p>
+      </GameplaySidebarCard>
 
-          <Card className="border-border/70 bg-card/95">
-            <CardContent className="space-y-2 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                Challenge
-              </p>
-              <p className="text-base font-semibold text-foreground">
-                {question.quiz_title || question.category || slug || "Arcade run"}
-              </p>
-            </CardContent>
-          </Card>
+      <GameplaySidebarCard label="Challenge">
+        <p className="text-base font-semibold text-foreground">
+          {question.quiz_title || question.category || slug || "Arcade run"}
+        </p>
+      </GameplaySidebarCard>
         </>
       }
     >

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Share2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Timer } from "lucide-react";
 import { toast } from "sonner";
 
 import GameplayLayout from "@/components/GameplayLayout";
+import GameplaySidebarCard from "@/components/GameplaySidebarCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { submitSnakeScore } from "@/client";
 import { readLocalPlayerName, saveLocalPlayerName } from "@/lib/playedChallenges";
-import { texts, resultShareText } from "@/texts";
+import { texts } from "@/texts";
 
 import SnakeBoard from "./SnakeBoard.jsx";
 
@@ -23,13 +25,6 @@ const FOOD_INITIAL_DELAY = 520;
 const FOOD_MIN_DELAY = 220;
 const FOOD_ACCELERATION_STEP = 4;
 const GROWTH_INTERVAL_MS = 5000;
-const SNAKE_INSTRUCTIONS = [
-  "Press arrow keys or WASD to steer. Starting the run wakes the hunter.",
-  "Keep moving—if the hunter food tags you, two segments disappear.",
-  "Avoid walls and your own tail. Re-center controls if things feel off.",
-  "Finish a run, log an alias, then share or restart immediately.",
-];
-
 const KEY_TO_DIRECTION = {
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
@@ -90,16 +85,21 @@ const moveFoodTowardsSnake = (currentFood, head) => {
   return { x: nextX, y: nextY };
 };
 
-const formatTime = (seconds) => `${seconds}s`;
+const formatTime = (rawSeconds) => {
+  const safeSeconds = Number.isFinite(rawSeconds) ? Math.max(0, Math.floor(rawSeconds)) : 0;
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+};
 
 export default function SnakePage() {
+  const navigate = useNavigate();
   const [snake, setSnake] = useState(() => createInitialSnake());
   const [food, setFood] = useState(() => getRandomFoodPosition(createInitialSnake()));
   const [direction, setDirection] = useState({ x: 1, y: 0 });
   const [status, setStatus] = useState("idle");
   const [elapsed, setElapsed] = useState(0);
   const [alias, setAlias] = useState(() => readLocalPlayerName() || "");
-  const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [finalStats, setFinalStats] = useState(null);
   const [foodDelay, setFoodDelay] = useState(FOOD_INITIAL_DELAY);
@@ -129,31 +129,35 @@ export default function SnakePage() {
     setElapsed(0);
     setStatus("running");
     setFinalStats(null);
-    setScoreSubmitted(false);
     setFoodDelay(FOOD_INITIAL_DELAY);
     setGrowthCycle(0);
     setGameOverDialogOpen(false);
   }, []);
 
   const handleSubmitScore = useCallback(async () => {
-    if (!finalStats || !alias.trim()) return;
+    if (!finalStats) return;
+    const trimmedAlias = alias.trim();
+    if (!trimmedAlias) return;
     setSubmitting(true);
     try {
       await submitSnakeScore({
-        username: alias.trim(),
+        username: trimmedAlias,
         score: finalStats.score,
         completion_time_seconds: finalStats.time,
       });
-      saveLocalPlayerName(alias.trim());
-      setScoreSubmitted(true);
+      saveLocalPlayerName(trimmedAlias);
       toast.success("Score posted to the leaderboard.");
+      setGameOverDialogOpen(false);
+      navigate(
+        `/results/snake-arcade?score=${finalStats.score}&time=${finalStats.time}&total=${TOTAL_CELLS}`
+      );
     } catch (error) {
       console.error("Snake leaderboard submission failed:", error);
       toast.error("Leaderboard update failed - give it another shot.");
     } finally {
       setSubmitting(false);
     }
-  }, [alias, finalStats]);
+  }, [alias, finalStats, navigate]);
 
   useEffect(() => {
     if (status !== "running") return undefined;
@@ -297,100 +301,56 @@ export default function SnakePage() {
   const statusLabel = status === "running" ? "Live chase" : status === "over" ? "Humbled" : "Waiting";
   const statusVariant = status === "running" ? "secondary" : "outline";
   const fillPercentage = Math.min(100, Math.round((currentScore / TOTAL_CELLS) * 100));
-  const shareCopy = useMemo(
-    () =>
-      resultShareText({
-        score: finalStats?.score ?? snake.length,
-        total: TOTAL_CELLS,
-        time: finalStats?.time ?? elapsed,
-        challengeName: "Snake Arcade",
-      }),
-    [finalStats, snake.length, elapsed]
-  );
-
-  const handleShare = useCallback(async () => {
-    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-    const shareTitle = "Snake Arcade run";
-    const sharePayload = shareUrl ? `${shareCopy} ${shareUrl}` : shareCopy;
-
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title: shareTitle, text: shareCopy, url: shareUrl || undefined });
-        return;
-      }
-
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(sharePayload);
-        toast.success("Copied your brag to clipboard.");
-        return;
-      }
-
-      if (typeof window !== "undefined") {
-        window.open(
-          `https://twitter.com/intent/tweet?text=${encodeURIComponent(sharePayload)}`,
-          "_blank",
-          "noopener,noreferrer"
-        );
-      }
-      toast.success("Share draft opened in a new tab.");
-    } catch (error) {
-      console.error("Snake share failed:", error);
-      toast.error("Share feature fizzled. Grab a screenshot instead.");
-    }
-  }, [shareCopy]);
+  const timerSeconds = status === "over" && finalStats ? finalStats.time : elapsed;
+  const timerDisplay = formatTime(timerSeconds);
+  const timerLabel = status === "over" ? "Final time" : "Time alive";
+  const timerHelper =
+    status === "running" ? "Live chase" : status === "over" ? "Last run logged" : "Ready to launch";
 
   const sidebar = (
     <>
-      <Card className="border-border/70 bg-card/95">
-        <CardHeader className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
-            {texts.challenge.scoreLabel}
-          </p>
-          <CardTitle className="text-3xl font-semibold">{currentScore}</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Ego is length—survive longer to grow fiercer.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <GameplaySidebarCard label={texts.challenge.scoreLabel}>
+        <p className="text-4xl font-semibold text-foreground">{currentScore}</p>
+        <p className="text-sm text-muted-foreground">Out of {TOTAL_CELLS} cells</p>
+      </GameplaySidebarCard>
 
-      <Card className="border-border/70 bg-card/95">
-        <CardHeader>
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
-            {texts.challenge.progressLabel}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Progress value={fillPercentage} />
-          <p className="text-xs text-muted-foreground">
-            {currentScore}/{TOTAL_CELLS} segments filled.
-          </p>
-        </CardContent>
-      </Card>
+      <GameplaySidebarCard
+        label={
+          <>
+            <span>{timerLabel}</span>
+            <Timer className="size-4" />
+          </>
+        }
+        labelClassName="flex items-center justify-between text-muted-foreground"
+      >
+        <p className="font-mono text-4xl">{timerDisplay}</p>
+        <p className="text-xs text-muted-foreground">{timerHelper}</p>
+      </GameplaySidebarCard>
 
-      <Card className="border-border/70 bg-card/95 sm:col-span-2">
-        <CardHeader className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-muted-foreground">
-            How to play
-          </p>
-          <CardTitle className="text-xl">Keep the chase centered</CardTitle>
-          <CardDescription>Same UX everywhere—especially on mobile.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 p-5">
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            {SNAKE_INSTRUCTIONS.map((tip) => (
-              <li key={tip} className="flex items-start gap-2">
-                <span className="mt-[2px] text-primary">•</span>
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      <GameplaySidebarCard
+        label={
+          <>
+            <span>{texts.challenge.progressLabel}</span>
+            <span>
+              {currentScore}/{TOTAL_CELLS}
+            </span>
+          </>
+        }
+        labelClassName="flex items-center justify-between text-muted-foreground"
+      >
+        <Progress value={fillPercentage} />
+        <p className="text-sm font-semibold text-muted-foreground">
+          {fillPercentage}% grid control
+        </p>
+      </GameplaySidebarCard>
     </>
   );
 
+  const playButtonLabel = status === "over" ? "Play again" : "Play run";
+  const showPlayOverlay = status !== "running";
+
   return (
-    <GameplayLayout sidebar={sidebar}>
+    <GameplayLayout sidebar={sidebar} sidebarWrapperClassName="sm:grid-cols-1">
       <Card className="flex flex-1 flex-col border-border/70 bg-card/95 lg:overflow-hidden">
         <CardHeader className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.45em] text-muted-foreground">
@@ -414,84 +374,70 @@ export default function SnakePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="mx-auto w-full max-w-[440px]">
-            <div className="aspect-square w-full rounded-2xl border border-white/10 bg-slate-950/40 p-2 transition">
+            <div className="relative aspect-square w-full rounded-2xl border border-white/10 bg-slate-950/40 p-2 transition">
               <SnakeBoard width={BOARD_WIDTH} height={BOARD_HEIGHT} snake={snake} food={food} />
+              {showPlayOverlay && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[1.1rem] bg-slate-950/80 backdrop-blur-sm">
+                  <Button size="lg" className="rounded-full px-8" onClick={startRun}>
+                    {playButtonLabel}
+                  </Button>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-muted-foreground">
+                    Tap play or use WASD/arrow keys
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button size="lg" className="rounded-full px-8" onClick={startRun}>
-              {status === "running" ? "Restart run" : "Start evasion run"}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="rounded-full px-6"
-              onClick={() => setDirection({ x: 1, y: 0 })}
-            >
-              Re-center controls
-            </Button>
           </div>
           <p className="text-xs text-muted-foreground">
             Master the grid. The hunter keeps closing. Same arena, same swagger as every challenge.
           </p>
         </CardContent>
       </Card>
-
-      {status === "over" && finalStats && (
-        <Card className="border-border/60 bg-popover/80">
-          <CardHeader className="space-y-1">
-            <CardTitle>Log your survival</CardTitle>
-            <CardDescription>
-              Ego {finalStats.score} · Time {formatTime(finalStats.time)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              value={alias}
-              onChange={(event) => setAlias(event.target.value)}
-              placeholder="Alias for the leaderboard"
-              className="text-sm"
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                size="lg"
-                className="rounded-full px-8"
-                onClick={handleSubmitScore}
-                disabled={submitting || !alias.trim() || scoreSubmitted || !finalStats}
-              >
-                {scoreSubmitted ? "Score logged" : submitting ? "Posting..." : "Post score"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="rounded-full px-6"
-                type="button"
-                onClick={handleShare}
-              >
-                <Share2 className="mr-2 size-4" />
-                Share run
-              </Button>
-              {scoreSubmitted && <Badge variant="outline">Logged</Badge>}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Dialog open={gameOverDialogOpen} onOpenChange={setGameOverDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Game over</DialogTitle>
             <DialogDescription>
-              The hunter finally caught you. Log your survival while the pain is fresh.
+              Drop an alias to log this run and see the full recap page.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Ego: {finalStats?.score ?? snake.length}</p>
-            <p>Time: {formatTime(finalStats?.time ?? elapsed)}</p>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Ego: <span className="font-semibold text-foreground">{finalStats?.score ?? snake.length}</span>
+            </p>
+            <p>
+              Time:{" "}
+              <span className="font-semibold text-foreground">
+                {formatTime(finalStats?.time ?? elapsed)}
+              </span>
+            </p>
+            <Input
+              value={alias}
+              onChange={(event) => setAlias(event.target.value)}
+              placeholder="Alias for the leaderboard"
+              autoFocus
+            />
+            <p className="text-xs">
+              Once logged, we’ll send you to the detailed results screen to flex properly.
+            </p>
           </div>
-          <DialogFooter className="justify-end">
-            <Button size="sm" onClick={() => setGameOverDialogOpen(false)}>
-              Log survival
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setGameOverDialogOpen(false)}
+            >
+              Maybe later
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-full px-6"
+              onClick={handleSubmitScore}
+              disabled={submitting || !alias.trim() || !finalStats}
+            >
+              {submitting ? "Logging..." : "Log survival"}
             </Button>
           </DialogFooter>
         </DialogContent>

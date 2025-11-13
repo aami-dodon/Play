@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchLeaderboard, submitScore } from "@/client";
+import { fetchLeaderboard, submitScore, fetchSnakeLeaderboard } from "@/client";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import StatTiles from "@/components/StatTiles";
 import { Button } from "@/components/ui/button";
@@ -25,24 +25,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { texts, resultShareText } from "@/texts";
-import { hasPlayedChallenge, saveLocalPlayerName } from "@/lib/playedChallenges";
+import { hasPlayedChallenge, readLocalPlayerName, saveLocalPlayerName } from "@/lib/playedChallenges";
 
 export default function Results() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const isSnakeResults = slug === "snake-arcade";
 
   const score = Number(params.get("score")) || 0;
   const time = Number(params.get("time")) || 0;
   const total = Number(params.get("total")) || 1;
   const accuracy = Math.round((score / total) * 100);
 
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(() => readLocalPlayerName() || "");
   const [submitting, setSubmitting] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
-  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
-  const [aliasDialogOpen, setAliasDialogOpen] = useState(true);
+  const [submitted, setSubmitted] = useState(isSnakeResults);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(() =>
+    isSnakeResults ? false : hasPlayedChallenge(slug)
+  );
+  const [aliasDialogOpen, setAliasDialogOpen] = useState(() => !isSnakeResults);
   const friendlyChallengeName = useMemo(() => {
     if (!slug) return "Arcade Challenge";
     return slug
@@ -67,14 +70,19 @@ export default function Results() {
     [score, time, accuracy]
   );
 
-  const leaderboardData = leaderboard.map((entry, index) => ({
-    player: entry.username,
-    score: entry.score,
-    category: slug || "Arcade",
-    time: `${entry.completion_time_seconds || "?"}s`,
-    rank: entry.rank || index + 1,
-    challengeName: friendlyChallengeName,
-  }));
+  const leaderboardData = leaderboard.map((entry, index) => {
+    const completion = entry.completion_time_seconds;
+    const timeLabel =
+      completion === null || completion === undefined ? "?" : `${completion}s`;
+    return {
+      player: entry.username,
+      score: entry.score,
+      category: slug || "Arcade",
+      time: timeLabel,
+      rank: entry.rank || index + 1,
+      challengeName: friendlyChallengeName,
+    };
+  });
 
   const shareCopyText = useMemo(
     () =>
@@ -89,10 +97,51 @@ export default function Results() {
   );
 
   useEffect(() => {
-    setAlreadyPlayed(hasPlayedChallenge(slug));
-  }, [slug]);
+    setLeaderboard([]);
+    if (isSnakeResults) {
+      setSubmitted(true);
+      setAliasDialogOpen(false);
+      setAlreadyPlayed(false);
+      setUsername((current) => current || readLocalPlayerName() || "");
+    } else {
+      setSubmitted(false);
+      setAliasDialogOpen(true);
+      setAlreadyPlayed(hasPlayedChallenge(slug));
+    }
+  }, [slug, isSnakeResults]);
+
+  useEffect(() => {
+    if (!isSnakeResults) return undefined;
+    let cancelled = false;
+    fetchSnakeLeaderboard(10)
+      .then((data) => {
+        if (cancelled) return;
+        setLeaderboard(
+          data.map((entry, index) => ({
+            username: entry.username,
+            score: entry.score,
+            completion_time_seconds:
+              entry.completion_time_seconds === undefined
+                ? null
+                : entry.completion_time_seconds,
+            rank: entry.rank || index + 1,
+          }))
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to load snake leaderboard:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSnakeResults]);
 
   const handleSubmit = async () => {
+    if (isSnakeResults) {
+      toast.error("Snake runs are logged from the arcade screen.");
+      return;
+    }
     if (!username) return;
     setSubmitting(true);
     try {
@@ -150,6 +199,16 @@ export default function Results() {
     }
   };
 
+  const handleReplay = () => {
+    if (isSnakeResults) {
+      navigate("/snake");
+      return;
+    }
+    navigate(`/challenge/${slug || "demo"}`);
+  };
+
+  const canReplay = isSnakeResults || !alreadyPlayed;
+
   return (
     <div className="space-y-8">
       <Card className="border-border/70 bg-card/95">
@@ -166,9 +225,9 @@ export default function Results() {
           <StatTiles stats={stats} />
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            {!alreadyPlayed && (
-              <Button size="lg" className="rounded-full px-8" onClick={() => navigate(`/challenge/${slug || "demo"}`)}>
-                {texts.results.buttons.replay}
+            {canReplay && (
+              <Button size="lg" className="rounded-full px-8" onClick={handleReplay}>
+                {isSnakeResults ? "Play again" : texts.results.buttons.replay}
               </Button>
             )}
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8">
@@ -184,13 +243,13 @@ export default function Results() {
               <Share2 className="size-4" /> {texts.results.buttons.share}
             </Button>
           </div>
-          {alreadyPlayed && (
+          {!isSnakeResults && alreadyPlayed && (
             <p className="text-sm text-muted-foreground">
               You already completed this challenge, so no repeat runs here. Explore another one instead.
             </p>
           )}
 
-          {!submitted ? (
+          {!submitted && !isSnakeResults ? (
             <div className="space-y-3 rounded-2xl border border-border/60 bg-popover/80 p-4">
               <p className="text-sm font-semibold text-foreground">
                 Drop your name to cement the brag.
