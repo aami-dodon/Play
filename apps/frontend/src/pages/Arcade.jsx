@@ -1,4 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import ChallengeCard from "@/components/ChallengeCard";
+import CategoryFilter from "@/components/CategoryFilter";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -7,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { fetchArcadeCategories } from "@/client";
 import { texts } from "@/texts";
 
 const arcadeGames = [
@@ -24,8 +29,58 @@ const arcadeGames = [
 ];
 
 export default function Arcade() {
-  const totalGames = arcadeGames.length;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategoryParam = searchParams.get("category") || "";
+  const normalizedCategoryFilter = selectedCategoryParam.trim().toLowerCase();
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    setCategoriesLoading(true);
+    setCategoriesError("");
+
+    const loadCategories = async () => {
+      try {
+        const response = await fetchArcadeCategories();
+        if (!isMounted) return;
+        setCategories(Array.isArray(response) ? response : []);
+      } catch (error) {
+        console.error("Failed to load categories", error);
+        if (isMounted) {
+          setCategoriesError("Category filter unavailable");
+        }
+      } finally {
+        if (isMounted) {
+          setCategoriesLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const displayedArcadeGames = useMemo(() => {
+    if (!normalizedCategoryFilter) {
+      return arcadeGames;
+    }
+    return arcadeGames.filter((game) => {
+      const gameCategory = (game.category || "").trim().toLowerCase();
+      return gameCategory === normalizedCategoryFilter;
+    });
+  }, [normalizedCategoryFilter]);
+
+  const totalGames = displayedArcadeGames.length;
   const gamesLabel = `${totalGames} arcade run${totalGames === 1 ? "" : "s"}`;
+
+  const handleCategorySelect = (categoryName) => {
+    const nextParams = categoryName ? { category: categoryName } : {};
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -59,11 +114,18 @@ export default function Arcade() {
               {texts.arcade.sectionSubtitle}
             </p>
           </div>
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategoryParam}
+            loading={categoriesLoading}
+            error={categoriesError}
+            onSelectCategory={handleCategorySelect}
+          />
         </div>
 
         {totalGames ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {arcadeGames.map((game) => (
+            {displayedArcadeGames.map((game) => (
               <ChallengeCard
                 key={game.slug}
                 challenge={game}

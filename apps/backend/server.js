@@ -8,6 +8,7 @@ const { testConnection } = require("./prismaClient");
 const quizRoutes = require("./routes/quizRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const arcadeRoutes = require("./routes/arcadeRoutes");
 const snakeRoutes = require("./features/snake/snakeRoutes");
 
 const app = express();
@@ -84,6 +85,7 @@ apiRouter.get("/health", (req, res) => res.send("OK"));
 apiRouter.use("/quizzes", quizRoutes);
 apiRouter.use("/leaderboard", leaderboardRoutes);
 apiRouter.use("/admin", adminRoutes);
+apiRouter.use("/arcades", arcadeRoutes);
 apiRouter.use("/games/snake", snakeRoutes);
 
 app.use(API_PREFIX, apiRouter);

@@ -7,7 +7,7 @@ export const texts = {
   nav: [
     { label: "Home", href: "/" },
     { label: "Challenges", href: "/challenge" },
-    { label: "Arcade", href: "/arcade" },
+    { label: "Arcades", href: "/arcade" },
     { label: "Leaderboard", href: "/leaderboard" },
   ],
   toasts: {

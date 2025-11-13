@@ -12,6 +12,11 @@ export async function fetchCategories() {
   return res.data;
 }
 
+export async function fetchArcadeCategories() {
+  const res = await axios.get(`${API_BASE}/arcades/categories`);
+  return res.data;
+}
+
 export async function fetchQuestions(slug) {
   const res = await axios.get(`${API_BASE}/quizzes/${slug}/questions`);
   return res.data;
