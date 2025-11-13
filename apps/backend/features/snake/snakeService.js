@@ -6,8 +6,8 @@ const SNAKE_GAME_DESCRIPTION = "Classic snake, new leaderboard bragging rights."
 const SNAKE_GAME_CATEGORY = "Arcade";
 const SNAKE_GAME_DIFFICULTY = "Retro";
 
-async function ensureSnakeQuiz() {
-  return prisma.quiz.upsert({
+async function ensureSnakeArcade() {
+  return prisma.arcade.upsert({
     where: { slug: SNAKE_GAME_SLUG },
     update: {
       title: SNAKE_GAME_TITLE,
@@ -28,7 +28,7 @@ async function ensureSnakeQuiz() {
 }
 
 module.exports = {
-  ensureSnakeQuiz,
+  ensureSnakeArcade,
   SNAKE_GAME_SLUG,
   SNAKE_GAME_TITLE,
 };

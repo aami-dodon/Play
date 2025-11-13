@@ -40,12 +40,29 @@ model Question {
 
 model Leaderboard {
   id                      Int      @id @default(autoincrement())
-  quiz_id                 Int
-  quiz                    Quiz     @relation(fields: [quiz_id], references: [id], name: "QuizLeaderboard")
+  quiz_id                 Int?
+  quiz                    Quiz?    @relation(fields: [quiz_id], references: [id], name: "QuizLeaderboard")
+  arcade_id               Int?
+  arcade                  Arcade?  @relation(fields: [arcade_id], references: [id], name: "ArcadeLeaderboard")
   username                String?  @db.VarChar(100)
   completion_time_seconds Int?
   score                   Int?
   created_at              DateTime @default(now())
 
   @@map("leaderboard")
+}
+
+model Arcade {
+  id            Int           @id @default(autoincrement())
+  slug          String        @unique
+  title         String
+  description   String?
+  category      String?
+  difficulty    String        @default("Spicy")
+  players_label String?
+  streak_label  String?
+  created_at    DateTime      @default(now())
+  leaderboard   Leaderboard[] @relation("ArcadeLeaderboard")
+
+  @@map("arcades")
 }

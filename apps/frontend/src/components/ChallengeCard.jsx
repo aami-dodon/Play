@@ -29,6 +29,7 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
     difficulty = "Spicy",
     players,
     streak,
+    href,
   } = challenge;
 
   const difficultyClass = difficultyColors[difficulty] || difficultyColors.Spicy;
@@ -78,7 +79,7 @@ export default function ChallengeCard({ challenge, ctaLabel = "Play", compact })
           {promptText}
         </p>
         <Button asChild size="sm" className="rounded-full px-4">
-          <Link to={slug ? `/challenge/${slug}` : "/challenge"}>{ctaLabel}</Link>
+          <Link to={href || (slug ? `/challenge/${slug}` : "/challenge")}>{ctaLabel}</Link>
         </Button>
       </CardFooter>
     </Card>

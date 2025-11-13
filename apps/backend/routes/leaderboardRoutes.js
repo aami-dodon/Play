@@ -96,12 +96,14 @@ router.get("/", async (req, res) => {
   const filterConditions = [];
   if (req.query.category && req.query.category.trim()) {
     const categoryParam = req.query.category.trim();
-    filterConditions.push(Prisma.sql`LOWER(q.category) = LOWER(${categoryParam})`);
+    filterConditions.push(
+      Prisma.sql`LOWER(COALESCE(q.category, a.category, '')) = LOWER(${categoryParam})`
+    );
   }
 
   if (req.query.challenge && req.query.challenge.trim()) {
     const challengeParam = req.query.challenge.trim();
-    filterConditions.push(Prisma.sql`q.slug = ${challengeParam}`);
+    filterConditions.push(Prisma.sql`COALESCE(q.slug, a.slug, '') = ${challengeParam}`);
   }
 
   const periodStart = getPeriodStart(req.query.period);
@@ -117,12 +119,14 @@ router.get("/", async (req, res) => {
       WITH filtered_leaderboard AS (
         SELECT
           l.*,
-          q.category,
-          q.slug,
-          q.title
+          COALESCE(NULLIF(q.category, ''), NULLIF(a.category, ''), '') AS category,
+          COALESCE(q.slug, a.slug, '') AS slug,
+          COALESCE(q.title, a.title, '') AS title
         FROM leaderboard l
-        JOIN quizzes q ON q.id = l.quiz_id
+        LEFT JOIN quizzes q ON q.id = l.quiz_id
+        LEFT JOIN arcades a ON a.id = l.arcade_id
         WHERE l.username IS NOT NULL AND l.username <> ''
+          AND (q.id IS NOT NULL OR a.id IS NOT NULL)
         ${filterWhere}
       ),
       aggregated AS (
@@ -216,10 +220,14 @@ router.get("/", async (req, res) => {
     const challengeLookupResult = await prisma.$queryRaw(Prisma.sql`
       SELECT jsonb_object_agg(tmp.slug, tmp.title) AS challenge_lookup
       FROM (
-        SELECT DISTINCT q.slug, q.title
+        SELECT DISTINCT
+          COALESCE(q.slug, a.slug, '') AS slug,
+          COALESCE(q.title, a.title, '') AS title
         FROM leaderboard l
-        JOIN quizzes q ON q.id = l.quiz_id
+        LEFT JOIN quizzes q ON q.id = l.quiz_id
+        LEFT JOIN arcades a ON a.id = l.arcade_id
         WHERE l.username IS NOT NULL AND l.username <> ''
+          AND (q.id IS NOT NULL OR a.id IS NOT NULL)
         ${filterWhere}
       ) tmp
     `);

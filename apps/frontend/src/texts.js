@@ -7,7 +7,7 @@ export const texts = {
   nav: [
     { label: "Home", href: "/" },
     { label: "Challenges", href: "/challenge" },
-    { label: "Snake", href: "/snake" },
+    { label: "Arcade", href: "/arcade" },
     { label: "Leaderboard", href: "/leaderboard" },
   ],
   toasts: {
@@ -162,6 +162,18 @@ export const texts = {
       tryAnother: "Try Another Challenge",
       share: "Share Score",
     },
+  },
+  arcade: {
+    hero: {
+      eyebrow: "Arcade menu",
+      title: "Quick thrills, same snarky UI.",
+      description:
+        "Grid-based antics like Snake live here. The fonts, colors, and vibes mirror the challenge arena so every play feels like it belongs.",
+    },
+    sectionTitle: "Arcade sessions",
+    sectionSubtitle: "Tap a card, dive straight into the quick games roster.",
+    emptyState: "More arcade runs are on their way. Check back later.",
+    cardCta: "Play now",
   },
   profile: {
     title: "Pilot profile",

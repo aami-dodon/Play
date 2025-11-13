@@ -45,7 +45,7 @@
  */
 const express = require("express");
 const { prisma } = require("../../prismaClient");
-const { ensureSnakeQuiz } = require("./snakeService");
+const { ensureSnakeArcade } = require("./snakeService");
 
 const router = express.Router();
 const LEADERBOARD_LIMIT_DEFAULT = 10;
@@ -115,11 +115,11 @@ const sanitizeSpeedrunTime = (value) => {
 router.get("/leaderboard", async (req, res) => {
   try {
     const limit = clampLimit(req.query.limit);
-    const snakeQuiz = await ensureSnakeQuiz();
+    const snakeArcade = await ensureSnakeArcade();
 
     const rows = await prisma.leaderboard.findMany({
       where: {
-        quiz_id: snakeQuiz.id,
+        arcade_id: snakeArcade.id,
         username: { not: null, not: "" },
       },
       orderBy: [
@@ -196,10 +196,10 @@ router.post("/score", async (req, res) => {
   }
 
   try {
-    const snakeQuiz = await ensureSnakeQuiz();
+    const snakeArcade = await ensureSnakeArcade();
     const entry = await prisma.leaderboard.create({
       data: {
-        quiz_id: snakeQuiz.id,
+        arcade_id: snakeArcade.id,
         username,
         score,
         completion_time_seconds: completionTime,
