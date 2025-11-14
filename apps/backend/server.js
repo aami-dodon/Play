@@ -10,6 +10,7 @@ const leaderboardRoutes = require("./routes/leaderboardRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const arcadeRoutes = require("./routes/arcadeRoutes");
 const snakeRoutes = require("./features/snake/snakeRoutes");
+const chaosRoutes = require("./features/chaos/chaosRoutes");
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 3000;
@@ -50,6 +51,7 @@ const swaggerOptions = {
     path.join(__dirname, "server.js"),
     path.join(__dirname, "routes/*.js"),
     path.join(__dirname, "features/snake/*.js"),
+    path.join(__dirname, "features/chaos/*.js"),
   ],
 };
 
@@ -87,6 +89,7 @@ apiRouter.use("/leaderboard", leaderboardRoutes);
 apiRouter.use("/admin", adminRoutes);
 apiRouter.use("/arcades", arcadeRoutes);
 apiRouter.use("/games/snake", snakeRoutes);
+apiRouter.use("/games/chaos", chaosRoutes);
 
 app.use(API_PREFIX, apiRouter);
 

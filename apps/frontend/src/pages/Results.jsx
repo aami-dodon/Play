@@ -3,7 +3,12 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchLeaderboard, submitScore, fetchSnakeLeaderboard } from "@/client";
+import {
+  fetchLeaderboard,
+  submitScore,
+  fetchSnakeLeaderboard,
+  fetchChaosLeaderboard,
+} from "@/client";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import StatTiles from "@/components/StatTiles";
 import { Button } from "@/components/ui/button";
@@ -32,20 +37,25 @@ export default function Results() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const isSnakeResults = slug === "snake-arcade";
+  const isChaosResults = slug === "chaos-drop";
+  const isArcadeResults = isSnakeResults || isChaosResults;
 
   const score = Number(params.get("score")) || 0;
   const time = Number(params.get("time")) || 0;
   const total = Number(params.get("total")) || 1;
   const accuracy = Math.round((score / total) * 100);
+  const placements = Number(params.get("pieces")) || 0;
+  const holes = Number(params.get("holes")) || 0;
+  const cleared = Number(params.get("cleared")) || 0;
 
   const [username, setUsername] = useState(() => readLocalPlayerName() || "");
   const [submitting, setSubmitting] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [submitted, setSubmitted] = useState(isSnakeResults);
+  const [submitted, setSubmitted] = useState(isArcadeResults);
   const [alreadyPlayed, setAlreadyPlayed] = useState(() =>
-    isSnakeResults ? false : hasPlayedChallenge(slug)
+    isArcadeResults ? false : hasPlayedChallenge(slug)
   );
-  const [aliasDialogOpen, setAliasDialogOpen] = useState(() => !isSnakeResults);
+  const [aliasDialogOpen, setAliasDialogOpen] = useState(() => !isArcadeResults);
   const friendlyChallengeName = useMemo(() => {
     if (!slug) return "Arcade Challenge";
     return slug
@@ -56,19 +66,37 @@ export default function Results() {
   }, [slug]);
 
   const feedbackLine = useMemo(() => {
+    if (isChaosResults) {
+      return "Maximum sabotage achieved. The AI is rethinking life choices.";
+    }
     const ratio = total ? score / total : 0;
     const match = texts.results.feedback.find((entry) => ratio >= entry.threshold);
     return match?.line || texts.results.copy;
-  }, [score, total]);
+  }, [isChaosResults, score, total]);
 
-  const stats = useMemo(
-    () => [
+  const stats = useMemo(() => {
+    if (isChaosResults) {
+      return [
+        { label: "Chaos score", value: score, helper: "Disorder index" },
+        { label: "Run time", value: `${time}s`, helper: "Sabotage window" },
+        { label: "Pieces dropped", value: placements, helper: "Sabotage attempts" },
+        { label: "AI clears", value: cleared, helper: "Rows deleted by the bot" },
+        { label: "Hidden holes", value: holes, helper: "Traps left buried" },
+      ];
+    }
+    if (isSnakeResults) {
+      return [
+        { label: "Score", value: score, helper: "Longest tail" },
+        { label: "Time", value: `${time}s`, helper: "Chase duration" },
+        { label: "Accuracy", value: `${accuracy}%`, helper: "Grid domination" },
+      ];
+    }
+    return [
       { label: "Score", value: score, helper: "Big brain energy" },
       { label: "Time", value: `${time}s`, helper: "Speedrun-ish" },
       { label: "Accuracy", value: `${accuracy}%`, helper: "Could be worse" },
-    ],
-    [score, time, accuracy]
-  );
+    ];
+  }, [accuracy, cleared, holes, isChaosResults, isSnakeResults, placements, score, time]);
 
   const leaderboardData = leaderboard.map((entry, index) => {
     const completion = entry.completion_time_seconds;
@@ -84,21 +112,22 @@ export default function Results() {
     };
   });
 
-  const shareCopyText = useMemo(
-    () =>
-      resultShareText({
-        score,
-        total,
-        accuracy,
-        time,
-        challengeName: friendlyChallengeName,
-      }),
-    [score, total, accuracy, time, friendlyChallengeName]
-  );
+  const shareCopyText = useMemo(() => {
+    if (isChaosResults) {
+      return `${friendlyChallengeName}: chaos score ${score} in ${time}s with ${placements} drops.`;
+    }
+    return resultShareText({
+      score,
+      total,
+      accuracy,
+      time,
+      challengeName: friendlyChallengeName,
+    });
+  }, [accuracy, friendlyChallengeName, isChaosResults, placements, score, time, total]);
 
   useEffect(() => {
     setLeaderboard([]);
-    if (isSnakeResults) {
+    if (isArcadeResults) {
       setSubmitted(true);
       setAliasDialogOpen(false);
       setAlreadyPlayed(false);
@@ -108,12 +137,13 @@ export default function Results() {
       setAliasDialogOpen(true);
       setAlreadyPlayed(hasPlayedChallenge(slug));
     }
-  }, [slug, isSnakeResults]);
+  }, [isArcadeResults, slug]);
 
   useEffect(() => {
-    if (!isSnakeResults) return undefined;
+    if (!isArcadeResults) return undefined;
     let cancelled = false;
-    fetchSnakeLeaderboard(10)
+    const load = isChaosResults ? fetchChaosLeaderboard : fetchSnakeLeaderboard;
+    load(10)
       .then((data) => {
         if (cancelled) return;
         setLeaderboard(
@@ -129,17 +159,17 @@ export default function Results() {
         );
       })
       .catch((error) => {
-        console.error("Failed to load snake leaderboard:", error);
+        console.error("Failed to load arcade leaderboard:", error);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isSnakeResults]);
+  }, [isArcadeResults, isChaosResults]);
 
   const handleSubmit = async () => {
-    if (isSnakeResults) {
-      toast.error("Snake runs are logged from the arcade screen.");
+    if (isArcadeResults) {
+      toast.error("Arcade runs are logged from the game screen.");
       return;
     }
     if (!username) return;
@@ -204,10 +234,14 @@ export default function Results() {
       navigate("/snake");
       return;
     }
+    if (isChaosResults) {
+      navigate("/chaos");
+      return;
+    }
     navigate(`/challenge/${slug || "demo"}`);
   };
 
-  const canReplay = isSnakeResults || !alreadyPlayed;
+  const canReplay = isArcadeResults || !alreadyPlayed;
 
   return (
     <div className="space-y-8">

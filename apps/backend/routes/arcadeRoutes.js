@@ -1,9 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const { prisma } = require("../prismaClient");
+const { ensureSnakeArcade } = require("../features/snake/snakeService");
+const { ensureChaosArcade } = require("../features/chaos/chaosService");
 
 const ARCADE_HREFS = {
   "snake-arcade": "/snake",
+  "chaos-drop": "/chaos",
 };
 
 /**
@@ -51,6 +54,7 @@ const ARCADE_HREFS = {
  */
 router.get("/", async (req, res) => {
   try {
+    await Promise.all([ensureSnakeArcade(), ensureChaosArcade()]);
     const categoryFilter = typeof req.query.category === "string" ? req.query.category.trim() : "";
     const where = {};
     if (categoryFilter) {
@@ -123,6 +127,7 @@ router.get("/", async (req, res) => {
  */
 router.get("/categories", async (_req, res) => {
   try {
+    await Promise.all([ensureSnakeArcade(), ensureChaosArcade()]);
     const categories = await prisma.$queryRaw`
       SELECT
         COALESCE(NULLIF(category, ''), 'Uncategorized') AS category,

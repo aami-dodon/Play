@@ -58,6 +58,18 @@ export async function submitSnakeScore(payload) {
   return res.data;
 }
 
+export async function fetchChaosLeaderboard(limit = 10) {
+  const res = await axios.get(`${API_BASE}/games/chaos/leaderboard`, {
+    params: { limit },
+  });
+  return res.data?.entries ?? [];
+}
+
+export async function submitChaosScore(payload) {
+  const res = await axios.post(`${API_BASE}/games/chaos/score`, payload);
+  return res.data;
+}
+
 export async function verifyAdminPassword(password) {
   const res = await axios.post(
     `${API_BASE}/admin/verify`,
