@@ -18,7 +18,7 @@ export default function SnakeBoard({ width, height, snake, food }) {
   return (
     <div
       role="presentation"
-      className="grid h-full w-full gap-1"
+      className="grid h-full w-full gap-[3px]"
       style={{
         gridTemplateColumns: `repeat(${width}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`,
@@ -36,7 +36,7 @@ export default function SnakeBoard({ width, height, snake, food }) {
           <div
             key={key}
             className={cn(
-              "rounded-[3px] border border-white/5 transition-colors duration-200",
+              "rounded-[4px] border border-white/5 transition-colors duration-200",
               isHead
                 ? "bg-lime-400 shadow-[0_0_12px_rgba(132,204,22,0.65)]"
                 : isBody

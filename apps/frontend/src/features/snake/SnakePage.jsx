@@ -428,7 +428,7 @@ export default function SnakePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="mx-auto w-full max-w-[440px]">
-            <div className="relative aspect-square w-full rounded-2xl border border-white/10 bg-slate-950/40 p-2 transition">
+            <div className="relative aspect-[18/16] w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 p-3 transition">
               <SnakeBoard width={BOARD_WIDTH} height={BOARD_HEIGHT} snake={snake} food={food} />
               {showPlayOverlay && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-[1.1rem] bg-background/80 backdrop-blur-sm dark:bg-background/60">
