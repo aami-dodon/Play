@@ -19,7 +19,7 @@ export const texts = {
   home: {
     hero: {
       eyebrow: "Live challenge queue",
-      title: "Think you're smart? Prove it. Or at least try.",
+      title: "Ready to outsmart the crowd? Step up and claim your bragging rights.",
       description:
         "Micro challenges, zero chill copy, and dopamine hits faster than your Wi-Fi router drops packets.",
       primaryCta: "Play Now — before your brain cools off.",
