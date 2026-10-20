@@ -25,3 +25,30 @@ services:
       - "${FRONTEND_PORT:-6009}:${FRONTEND_PORT:-6009}"
     depends_on:
       - backend
+
+  # One entry point (infrastructure/gateway/nginx.conf): the frontend at /
+  # and the backend at /api/. The tunnel publishes this; on the LAN it is
+  # http://<host>:GATEWAY_PORT.
+  gateway:
+    image: nginx:1.27.5-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "${GATEWAY_PORT:-6010}:80"
+    volumes:
+      # nginx.conf and proxy.inc, which it includes
+      - ./infrastructure/gateway:/etc/nginx/conf.d:ro
+
+  # Cloudflare Tunnel to the gateway, so the app is reachable at
+  # https://play.dodon.in. CLOUDFLARE_TUNNEL_TOKEN identifies the tunnel;
+  # an empty token makes it exit and the rest of the stack runs.
+  tunnel:
+    image: cloudflare/cloudflared:2026.9.1
+    restart: unless-stopped
+    depends_on:
+      - gateway
+    command: ["tunnel", "--no-autoupdate", "run", "--url", "http://gateway:80"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}

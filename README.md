@@ -48,6 +48,13 @@ The frontend is a modern React+Vite SPA that calls the backend API to render fea
   ```
   Vite will serve the UI on `http://localhost:6009` and proxy API requests to the backend.
 
+## Public access (gateway + Cloudflare tunnel)
+`docker compose up -d` also starts:
+- **`gateway`** (nginx, [`infrastructure/gateway/nginx.conf`](infrastructure/gateway/nginx.conf)): one entry point, with `/api/` going to the backend and everything else to the frontend. On the LAN it is `http://<host>:6010` (`GATEWAY_PORT`).
+- **`tunnel`** (cloudflared): publishes the gateway at `https://play.dodon.in`, using the tunnel token in `.env` as `CLOUDFLARE_TUNNEL_TOKEN`. If the token is empty, the tunnel exits and the rest of the stack keeps running.
+
+The tunnel is `play` (created with `cloudflared tunnel create play`, DNS routed with `cloudflared tunnel route dns play play.dodon.in`). To set up a new machine, get its token with `cloudflared tunnel token play` and put it in `.env`. Run only one machine per tunnel, because two machines on the same tunnel would split its traffic.
+
 ## API snapshot
 - `GET /api/health` – health check.
 - `GET /api/quizzes` – paginated quiz catalog with optional `featured`, `category`, and `limit` filters.
